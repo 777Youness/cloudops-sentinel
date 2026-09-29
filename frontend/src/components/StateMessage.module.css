@@ -1,0 +1,27 @@
+.state {
+  padding: var(--sp-6) var(--sp-4);
+  border-bottom: var(--rule);
+}
+.state > * {
+  max-width: 72ch;
+}
+.error {
+  border-left: 2px solid var(--crit);
+}
+.title {
+  font-size: var(--fs-14);
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+}
+.detail {
+  margin-top: var(--sp-1);
+  color: var(--text-2);
+}
+.code {
+  margin-top: var(--sp-2);
+  font-size: var(--fs-12);
+  color: var(--text-3);
+}
+.action {
+  margin-top: var(--sp-4);
+}

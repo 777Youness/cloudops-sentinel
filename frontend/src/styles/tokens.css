@@ -1,0 +1,74 @@
+/*
+ * CloudOps Sentinel design tokens. Components use these variables only:
+ * no raw hex values, ad-hoc font sizes or shadows elsewhere.
+ * Source of truth: docs/design-system.md
+ */
+:root {
+  /* Backgrounds: warm graphite, not blue-black */
+  --bg: #0f1113;
+  --surface: #15181b;
+  --raised: #1b1f23;
+
+  /* Borders do most of the structuring */
+  --border: #262b30;
+  --border-strong: #343a41;
+
+  /* Text: three levels only */
+  --text-1: #e4e6e8;
+  --text-2: #a2a9b1;
+  --text-3: #7d858e;
+
+  /* Accent: selection, links, focus, deployment markers. Never a status. */
+  --accent: #6fa3d9;
+
+  /* State: color means state and nothing else */
+  --ok: #3fae7a;
+  --warn: #d9a13b;
+  --crit: #e0584f;
+  --unknown: #7a828b;
+  --ok-tint: rgb(63 174 122 / 12%);
+  --warn-tint: rgb(217 161 59 / 12%);
+  --crit-tint: rgb(224 88 79 / 12%);
+
+  /* Type */
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px; /* body */
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --lh-tight: 1.25;
+  --lh-body: 1.5;
+
+  /* Spacing: 4 px base */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+
+  /* Shape */
+  --radius-1: 2px;
+  --radius-2: 4px; /* maximum */
+  --rule: 1px solid var(--border);
+  --rule-strong: 1px solid var(--border-strong);
+
+  /* Elevation: overlays only */
+  --shadow-overlay: 0 4px 16px rgb(0 0 0 / 40%);
+
+  /* Motion */
+  --duration: 120ms;
+
+  /* Layout */
+  --sidebar-width: 208px;
+  --topbar-height: 44px;
+  --row-height: 36px;
+}

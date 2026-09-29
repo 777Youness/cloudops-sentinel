@@ -1,0 +1,37 @@
+.bar {
+  height: var(--topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: 0 var(--sp-6);
+  border-bottom: var(--rule);
+}
+.context {
+  display: flex;
+  gap: var(--sp-6);
+}
+.item {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: baseline;
+}
+.item dt {
+  color: var(--text-3);
+  font-size: var(--fs-12);
+}
+.item dd {
+  color: var(--text-1);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.status {
+  color: var(--text-2);
+  font-size: var(--fs-12);
+}
+.crit {
+  color: var(--crit);
+}

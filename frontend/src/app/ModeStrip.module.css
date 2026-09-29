@@ -1,0 +1,8 @@
+.strip {
+  padding: var(--sp-1) var(--sp-6);
+  background: var(--warn-tint);
+  border-bottom: 1px solid var(--warn);
+  color: var(--warn);
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+}

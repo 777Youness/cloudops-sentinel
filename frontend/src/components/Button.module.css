@@ -1,0 +1,22 @@
+.button {
+  height: 28px;
+  padding: 0 var(--sp-3);
+  border: var(--rule-strong);
+  border-radius: var(--radius-1);
+  background: var(--raised);
+  color: var(--text-1);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition:
+    border-color var(--duration),
+    background var(--duration);
+  white-space: nowrap;
+}
+.button:hover:not(:disabled) {
+  border-color: var(--text-3);
+}
+.button:disabled {
+  cursor: default;
+  color: var(--text-2);
+}

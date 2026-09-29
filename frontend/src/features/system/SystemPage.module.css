@@ -1,0 +1,67 @@
+.page {
+  max-width: 960px;
+}
+.h1 {
+  font-size: var(--fs-20);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+  margin-bottom: var(--sp-4);
+}
+.h2 {
+  margin: var(--sp-8) 0 var(--sp-2);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-semibold);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--rule-strong);
+}
+.list {
+  display: grid;
+}
+.kv {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--sp-4);
+  padding: var(--sp-2) 0;
+  border-bottom: var(--rule);
+}
+.kv dt {
+  color: var(--text-2);
+}
+.table {
+  width: 100%;
+}
+.table th {
+  text-align: left;
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+  border-bottom: var(--rule);
+}
+.table td {
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+  border-bottom: var(--rule);
+  vertical-align: top;
+}
+.hint {
+  display: block;
+  color: var(--text-2);
+}
+.muted {
+  color: var(--text-3);
+}
+.state_ok,
+.outcome_success {
+  color: var(--ok);
+}
+.state_degraded,
+.outcome_partial {
+  color: var(--warn);
+}
+.state_failed,
+.outcome_failed {
+  color: var(--crit);
+}
+.state_disabled {
+  color: var(--text-3);
+}

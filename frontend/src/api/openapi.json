@@ -1,0 +1,636 @@
+{
+  "components": {
+    "schemas": {
+      "CollectorError": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "CollectorError",
+        "type": "object"
+      },
+      "CollectorStatus": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CollectorError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_success_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Success At"
+          },
+          "name": {
+            "enum": [
+              "simulator",
+              "ec2",
+              "cloudwatch_metrics",
+              "cloudwatch_logs",
+              "alarms"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "ok",
+              "degraded",
+              "failed",
+              "disabled"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "state"
+        ],
+        "title": "CollectorStatus",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody",
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "Health",
+        "type": "object"
+      },
+      "IncidentList": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "IncidentList",
+        "type": "object"
+      },
+      "IncidentSummary": {
+        "properties": {
+          "data_origin": {
+            "enum": [
+              "simulated",
+              "aws"
+            ],
+            "title": "Data Origin",
+            "type": "string"
+          },
+          "first_detected_at": {
+            "format": "date-time",
+            "title": "First Detected At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "investigation_status": {
+            "enum": [
+              "not_run",
+              "completed",
+              "failed",
+              "unavailable"
+            ],
+            "title": "Investigation Status",
+            "type": "string"
+          },
+          "key_signals": {
+            "items": {
+              "$ref": "#/components/schemas/KeySignal"
+            },
+            "title": "Key Signals",
+            "type": "array"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_name": {
+            "title": "Resource Name",
+            "type": "string"
+          },
+          "severity": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "resolved"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "severity",
+          "status",
+          "resource_id",
+          "resource_name",
+          "data_origin",
+          "first_detected_at",
+          "key_signals",
+          "investigation_status"
+        ],
+        "title": "IncidentSummary",
+        "type": "object"
+      },
+      "KeySignal": {
+        "properties": {
+          "signal": {
+            "enum": [
+              "cpu_utilization",
+              "cpu_credit_balance",
+              "memory_used",
+              "status_check_failed",
+              "latency_p95",
+              "error_rate_5xx",
+              "request_rate"
+            ],
+            "title": "Signal",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "percent",
+              "credits",
+              "count",
+              "ms",
+              "per_minute"
+            ],
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "number"
+          }
+        },
+        "required": [
+          "signal",
+          "value",
+          "unit"
+        ],
+        "title": "KeySignal",
+        "type": "object"
+      },
+      "LlmStatus": {
+        "properties": {
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          }
+        },
+        "required": [
+          "provider",
+          "model",
+          "configured"
+        ],
+        "title": "LlmStatus",
+        "type": "object"
+      },
+      "SyncRun": {
+        "properties": {
+          "collectors": {
+            "items": {
+              "$ref": "#/components/schemas/CollectorStatus"
+            },
+            "title": "Collectors",
+            "type": "array"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "title": "Finished At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "incidents_opened": {
+            "title": "Incidents Opened",
+            "type": "integer"
+          },
+          "incidents_resolved": {
+            "title": "Incidents Resolved",
+            "type": "integer"
+          },
+          "incidents_updated": {
+            "title": "Incidents Updated",
+            "type": "integer"
+          },
+          "resources_evaluated": {
+            "title": "Resources Evaluated",
+            "type": "integer"
+          },
+          "rules_evaluated": {
+            "title": "Rules Evaluated",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "success",
+              "partial",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "started_at",
+          "finished_at",
+          "status",
+          "collectors",
+          "resources_evaluated",
+          "rules_evaluated",
+          "incidents_opened",
+          "incidents_updated",
+          "incidents_resolved"
+        ],
+        "title": "SyncRun",
+        "type": "object"
+      },
+      "SystemStatus": {
+        "properties": {
+          "contract_version": {
+            "title": "Contract Version",
+            "type": "string"
+          },
+          "environment": {
+            "title": "Environment",
+            "type": "string"
+          },
+          "last_sync": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyncRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "llm": {
+            "$ref": "#/components/schemas/LlmStatus"
+          },
+          "mode": {
+            "enum": [
+              "local",
+              "aws"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "version",
+          "contract_version",
+          "mode",
+          "environment",
+          "region",
+          "llm"
+        ],
+        "title": "SystemStatus",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Evidence-based incident investigation for AWS workloads.",
+    "title": "CloudOps Sentinel API",
+    "version": "0.1.0.dev1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "description": "Liveness only. Never touches AWS or the store.",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/api/v1/incidents": {
+      "get": {
+        "description": "Incidents sorted by severity (highest first), then most recent first.",
+        "operationId": "list_incidents_api_v1_incidents_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "open",
+              "enum": [
+                "open",
+                "resolved",
+                "all"
+              ],
+              "title": "Status",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Incidents",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/api/v1/sync": {
+      "post": {
+        "description": "Collect telemetry, run detection, store the result.\n\nReturns 200 even when the sync itself failed: the SyncRun status describes the outcome.\nReturns 409 SYNC_IN_PROGRESS if another sync is running.",
+        "operationId": "run_sync_api_v1_sync_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncRun"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          }
+        },
+        "summary": "Run Sync",
+        "tags": [
+          "sync"
+        ]
+      }
+    },
+    "/api/v1/system": {
+      "get": {
+        "operationId": "system_api_v1_system_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "System",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  }
+}

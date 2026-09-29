@@ -1,0 +1,116 @@
+.header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+.h1 {
+  font-size: var(--fs-20);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+.filters {
+  display: flex;
+  gap: var(--sp-1);
+}
+.filter {
+  padding: 2px var(--sp-2);
+  border-radius: var(--radius-1);
+  color: var(--text-2);
+  font-weight: var(--fw-medium);
+}
+.filter:hover {
+  color: var(--text-1);
+  text-decoration: none;
+}
+.filterActive {
+  color: var(--text-1);
+  background: var(--raised);
+}
+.tableWrap {
+  overflow-x: auto;
+  border-top: var(--rule-strong);
+}
+.table {
+  width: 100%;
+  min-width: 960px;
+}
+.table th {
+  height: 32px;
+  padding: 0 var(--sp-3);
+  text-align: left;
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+  border-bottom: var(--rule);
+  white-space: nowrap;
+}
+.row td {
+  height: var(--row-height);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: var(--rule);
+  vertical-align: middle;
+}
+/* Severity bar on the row's left edge: the fastest thing to scan in a long list. */
+.row td:first-child {
+  box-shadow: inset 3px 0 0 var(--sev-color, transparent);
+  padding-left: var(--sp-4);
+}
+.sev_critical {
+  --sev-color: var(--crit);
+}
+.sev_high {
+  --sev-color: var(--crit);
+}
+.sev_medium {
+  --sev-color: var(--warn);
+}
+.sev_low {
+  --sev-color: var(--border-strong);
+}
+.title {
+  font-weight: var(--fw-medium);
+  color: var(--text-1);
+}
+.resourceName {
+  display: block;
+}
+.resourceId,
+.relative {
+  display: block;
+  font-size: var(--fs-12);
+  color: var(--text-3);
+}
+.signal {
+  display: inline-flex;
+  gap: var(--sp-2);
+  margin-right: var(--sp-3);
+}
+.signalLabel {
+  color: var(--text-2);
+}
+.muted {
+  color: var(--text-3);
+}
+
+.colSeverity {
+  width: 104px;
+}
+.colId {
+  width: 104px;
+}
+.colResource {
+  width: 200px;
+}
+.colSignal {
+  width: 140px;
+}
+.colDetected {
+  width: 160px;
+}
+.colStatus {
+  width: 88px;
+}
+.colInvestigation {
+  width: 112px;
+}

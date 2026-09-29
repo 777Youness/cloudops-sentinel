@@ -1,0 +1,28 @@
+.tag {
+  display: inline-block;
+  min-width: 64px;
+  padding: 1px var(--sp-2);
+  border: 1px solid;
+  border-radius: var(--radius-1);
+  font-size: var(--fs-12);
+  font-weight: var(--fw-semibold);
+  line-height: 18px;
+  text-align: center;
+}
+.critical {
+  background: var(--crit);
+  border-color: var(--crit);
+  color: var(--bg);
+}
+.high {
+  border-color: var(--crit);
+  color: var(--crit);
+}
+.medium {
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.low {
+  border-color: var(--border-strong);
+  color: var(--text-2);
+}

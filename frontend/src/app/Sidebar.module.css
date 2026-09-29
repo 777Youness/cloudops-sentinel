@@ -1,0 +1,62 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  border-right: var(--rule);
+  background: var(--bg);
+}
+.wordmark {
+  height: var(--topbar-height);
+  display: flex;
+  gap: var(--sp-2);
+  align-items: center;
+  padding: 0 var(--sp-4);
+  border-bottom: var(--rule);
+}
+.product {
+  font-size: var(--fs-14);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.01em;
+}
+.family {
+  font-size: var(--fs-12);
+  color: var(--text-3);
+}
+.nav {
+  padding: var(--sp-3) 0;
+  flex: 1;
+}
+.bottom {
+  padding: var(--sp-3) 0;
+  border-top: var(--rule);
+}
+.link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--sp-4);
+  border-left: 2px solid transparent;
+  color: var(--text-2);
+  font-weight: var(--fw-medium);
+  transition:
+    color var(--duration),
+    background var(--duration);
+}
+.link:hover {
+  color: var(--text-1);
+  text-decoration: none;
+}
+.active {
+  color: var(--text-1);
+  background: var(--surface);
+  border-left-color: var(--accent);
+}
+.count {
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+@media (max-width: 1023px) {
+  .sidebar {
+    display: none; /* collapsible menu arrives with the tablet layout pass */
+  }
+}

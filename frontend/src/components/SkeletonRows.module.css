@@ -1,0 +1,19 @@
+.row {
+  height: var(--row-height);
+  border-bottom: var(--rule);
+}
+.cell {
+  padding: 0 var(--sp-3);
+}
+.bar {
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-1);
+  background: var(--raised);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
