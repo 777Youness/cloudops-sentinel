@@ -1,0 +1,27 @@
+# Secrets and local configuration: never committed
+.env
+*.pem
+*.tfvars
+!*.tfvars.example
+.venv/
+# Terraform (Day 4+)
+.terraform/
+*.tfstate
+*.tfstate.*
+tfplan
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
