@@ -13,7 +13,11 @@ ONE_SCENARIO_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "scenar
 
 @pytest.fixture
 def client(clock):
-    return TestClient(create_app(Settings(mode="local", scenarios_dir=ONE_SCENARIO_DIR), clock))
+    return TestClient(
+        create_app(
+            Settings(mode="local", scenarios_dir=ONE_SCENARIO_DIR, db_path=":memory:"), clock
+        )
+    )
 
 
 def test_health(client):
@@ -90,11 +94,29 @@ def test_aws_mode_fails_honestly():
 
 
 def test_full_scenario_set_opens_one_incident_per_incident_scenario(clock):
-    settings = Settings(mode="local")
+    settings = Settings(mode="local", db_path=":memory:")
     client = TestClient(create_app(settings, clock))
-    expected = [s for s in load_scenarios(settings.scenarios_dir) if s.expected.incident]
+    scenarios = load_scenarios(settings.scenarios_dir)
+    expected = [s for s in scenarios if s.phase(0).expected.incident]
     run = client.post("/api/v1/sync").json()
     assert run["incidents_opened"] == len(expected)
     items = client.get("/api/v1/incidents").json()["items"]
     # sorted by severity: the critical status-check incident comes first
     assert items[0]["severity"] == "critical"
+
+
+def test_incidents_survive_a_restart(clock, tmp_path):
+    settings = Settings(scenarios_dir=ONE_SCENARIO_DIR, db_path=str(tmp_path / "sentinel.db"))
+    first = TestClient(create_app(settings, clock))
+    first.post("/api/v1/sync")
+    first.app.state.container.store.close()
+
+    second = TestClient(create_app(settings, clock))
+    assert second.get("/api/v1/incidents").json()["total"] == 1
+    assert second.get("/api/v1/system").json()["last_sync"]["id"] == "SYNC-0001"
+    second.app.state.container.store.close()
+
+
+def test_default_database_is_one_file_per_mode():
+    assert Settings(mode="local").resolved_db_path().endswith("sentinel-local.db")
+    assert Settings(mode="aws").resolved_db_path().endswith("sentinel-aws.db")

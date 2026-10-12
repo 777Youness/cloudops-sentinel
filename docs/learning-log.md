@@ -48,6 +48,20 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - CloudWatch statistics (Average, Maximum, p95) and burstable-instance CPU credits.
 - Line endings in Git (`.gitattributes`, `core.autocrlf`).
 
+**Milestone 2b**
+- Incident lifecycle as a state machine (open → updated → resolved; reopen = new incident),
+  and why the engine returns new versions instead of mutating (`model_copy`).
+- Append-only facts: why a fact id must never change once something can cite it.
+- Hysteresis: why resolution needs 10 clean minutes, not one good datapoint (flapping).
+- Transactions and atomicity (`BEGIN` / `COMMIT` / `ROLLBACK`): a sync is stored whole or
+  not at all; why collection happens outside the transaction.
+- SQLite as a document store: JSON `body` column plus indexed columns; `PRAGMA user_version`
+  for schema migrations (ADR 0013).
+- Thread safety: one connection shared by threads, `check_same_thread=False`, `RLock`
+  (re-entrant: the same thread takes it again inside a transaction).
+- Idempotency: a stable event id makes "the same event seen twice" a no-op.
+- Test doubles vs the real thing: tests use SQLite `:memory:`, not a fake store.
+
 ## Milestone 2a — all detection rules
 
 - Date: 2026-10-12
@@ -56,3 +70,13 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - To try later: in `backend/scenarios/low_traffic_errors.yaml` raise `request_rate`
   baseline from 2 to 10 and run `uv run pytest tests/test_scenarios.py` — what fails, and why?
 - In my own words, why R-LAT needs two passes:
+
+## Milestone 2b — lifecycle and storage
+
+- Date: 2026-10-12
+- Built: merge / peak severity / resolution / reopen in the engine, deployment events,
+  SQLite store (one file per mode), multi-phase scenarios.
+- To try later: start the backend, click Sync now twice, stop it, start it again: the
+  incidents are still there (SQLite). Then delete `backend/data/sentinel-local.db` and
+  restart: empty history.
+- In my own words, why missing data never resolves an incident:

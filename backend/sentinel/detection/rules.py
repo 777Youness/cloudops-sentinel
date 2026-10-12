@@ -343,3 +343,61 @@ def evaluate_resource(
     ]
     results.append(user_impact(results, resource.id))
     return results
+
+
+# How each signal-based rule's condition is re-checked when deciding whether it has cleared:
+# rule id -> (signal, threshold, breaches when value <= threshold).
+# R-LAT's threshold depends on its baseline, so it comes from the incident's own fact.
+# R-5XX clears below its lower tier (2%), not below 5%.
+RULE_CONDITIONS: dict[str, tuple[SignalName, float | None, bool]] = {
+    "R-CPU-SAT": ("cpu_utilization", th.CPU_SAT_THRESHOLD_PERCENT, False),
+    "R-CPU-CREDIT": ("cpu_credit_balance", th.CPU_CREDIT_THRESHOLD, True),
+    "R-MEM": ("memory_used", th.MEM_THRESHOLD_PERCENT, False),
+    "R-STATUS": ("status_check_failed", th.STATUS_FAILED_THRESHOLD, False),
+    "R-5XX": ("error_rate_5xx", th.ERR_5XX_MEDIUM_PERCENT, False),
+    "R-LAT": ("latency_p95", None, False),
+}
+
+
+@dataclass(frozen=True)
+class Clearance:
+    """How long a rule's condition has been continuously clear, up to the latest datapoint."""
+
+    rule_id: str
+    signal: SignalName
+    threshold: float
+    clean_since: datetime | None  # None: not clean at the latest datapoint, or no data
+    duration: timedelta
+    latest: float | None
+
+    @property
+    def cleared(self) -> bool:
+        return self.duration >= th.RESOLVE_CLEAN_DURATION
+
+
+def clearance(series: MetricSeries | None, rule_id: str, threshold: float) -> Clearance:
+    """Missing data is never clean: without datapoints the condition is not cleared.
+
+    A gap breaks the clean run exactly like it breaks a breach run.
+    """
+    signal, _, below = RULE_CONDITIONS[rule_id]
+    not_clear = Clearance(rule_id, signal, threshold, None, timedelta(0), None)
+    if series is None or not series.points:
+        return not_clear
+
+    def is_clean(v: float) -> bool:
+        return v > threshold if below else v < threshold
+
+    run = trailing_run(series.points, is_clean, series.period_seconds)
+    latest = series.points[-1].v
+    if not run:
+        return replace(not_clear, latest=latest)
+    period = timedelta(seconds=series.period_seconds)
+    return Clearance(
+        rule_id,
+        signal,
+        threshold,
+        clean_since=run[0].t,
+        duration=(run[-1].t - run[0].t) + period,
+        latest=latest,
+    )

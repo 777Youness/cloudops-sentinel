@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     # Dev aid: makes the simulated collector slow so loading states and the sync lock
     # can be observed. Always 0 outside manual testing.
     simulated_latency_seconds: float = 0.0
+    # Where incidents and sync runs are stored. Default: data/sentinel-<mode>.db, one file
+    # per mode so simulated and AWS incidents can never mix. ":memory:" keeps nothing.
+    db_path: str | None = None
+
+    def resolved_db_path(self) -> str:
+        return self.db_path or str(BACKEND_DIR / "data" / f"sentinel-{self.mode}.db")
 
 
 VERSION = "0.1.0.dev1"

@@ -32,7 +32,7 @@ def _ids():
 
 
 def test_opens_incident_with_fact_and_rule_severity():
-    result = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), set(), NOW, _ids())
+    result = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), [], NOW, _ids())
     [incident] = result.opened
     assert incident.severity == "medium"  # from the severity matrix, not from anything else
     assert incident.rule_ids == ["R-CPU-SAT"]
@@ -43,26 +43,29 @@ def test_opens_incident_with_fact_and_rule_severity():
 
 
 def test_evidence_keeps_60_minutes_before_breach():
-    result = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), set(), NOW, _ids())
+    result = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), [], NOW, _ids())
     points = result.opened[0].evidence.series[0].points
     breach_start = result.opened[0].facts[0].window.start
     assert points[0].t == breach_start - timedelta(minutes=60)
 
 
 def test_no_duplicate_when_resource_already_has_open_incident():
-    result = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), {"r-1"}, NOW, _ids())
+    snapshot = _snapshot([40.0] * 90 + [97.0] * 20)
+    [incident] = engine.evaluate(snapshot, [], NOW, _ids()).opened
+    result = engine.evaluate(snapshot, [incident], NOW, _ids())
     assert result.opened == []
+    assert result.updated == []  # same situation observed again: nothing changes
 
 
 def test_normal_data_opens_nothing():
-    result = engine.evaluate(_snapshot([40.0] * 110), set(), NOW, _ids())
+    result = engine.evaluate(_snapshot([40.0] * 110), [], NOW, _ids())
     assert result.opened == []
     assert result.resources_evaluated == 1
 
 
 def test_evidence_hash_is_stable():
-    a = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), set(), NOW, _ids())
-    b = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), set(), NOW, _ids())
+    a = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), [], NOW, _ids())
+    b = engine.evaluate(_snapshot([40.0] * 90 + [97.0] * 20), [], NOW, _ids())
     assert a.opened[0].evidence_hash == b.opened[0].evidence_hash
 
 
@@ -76,7 +79,7 @@ CPU_BREACH = [40.0] * 90 + [97.0] * 20
 def test_unevaluable_rules_become_data_gap_facts_after_the_breach():
     # Only CPU is present. The test resource has no credit mode, so R-CPU-CREDIT is
     # not applicable (no fact); every other rule could not be evaluated.
-    [incident] = engine.evaluate(_snapshot(CPU_BREACH), set(), NOW, _ids()).opened
+    [incident] = engine.evaluate(_snapshot(CPU_BREACH), [], NOW, _ids()).opened
     kinds = [f.kind for f in incident.facts]
     assert kinds[0] == "threshold_breach"
     assert set(kinds[1:]) == {"data_gap"}
@@ -87,7 +90,7 @@ def test_unevaluable_rules_become_data_gap_facts_after_the_breach():
 
 def test_checked_normal_signals_become_within_normal_facts():
     memory = _signal([50.0] * 110, "memory_used")
-    [incident] = engine.evaluate(_snapshot(CPU_BREACH, memory), set(), NOW, _ids()).opened
+    [incident] = engine.evaluate(_snapshot(CPU_BREACH, memory), [], NOW, _ids()).opened
     [normal] = [f for f in incident.facts if f.kind == "within_normal"]
     assert normal.rule_id == "R-MEM"
     assert normal.value == 50.0
@@ -96,13 +99,13 @@ def test_checked_normal_signals_become_within_normal_facts():
 
 def test_fact_ids_are_sequential_and_unique():
     memory = _signal([50.0] * 110, "memory_used")
-    [incident] = engine.evaluate(_snapshot(CPU_BREACH, memory), set(), NOW, _ids()).opened
+    [incident] = engine.evaluate(_snapshot(CPU_BREACH, memory), [], NOW, _ids()).opened
     assert [f.id for f in incident.facts] == [f"F{i}" for i in range(1, len(incident.facts) + 1)]
 
 
 def test_several_rules_on_one_resource_make_one_incident():
     memory = _signal([50.0] * 90 + [95.0] * 20, "memory_used")
-    result = engine.evaluate(_snapshot(CPU_BREACH, memory), set(), NOW, _ids())
+    result = engine.evaluate(_snapshot(CPU_BREACH, memory), [], NOW, _ids())
     [incident] = result.opened
     assert incident.rule_ids == ["R-CPU-SAT", "R-MEM"]
     assert [k.signal for k in incident.key_signals] == ["cpu_utilization", "memory_used"]
@@ -118,7 +121,7 @@ def test_latency_and_errors_together_raise_severity_and_name_the_incident():
     errors = _signal([0.3] * 95 + [3.5] * 15, "error_rate_5xx")  # lower tier: medium
     latency = _signal([180.0] * 95 + [1400.0] * 15, "latency_p95", "ms")  # medium
     snapshot = _snapshot([40.0] * 110, requests, errors, latency)
-    [incident] = engine.evaluate(snapshot, set(), NOW, _ids()).opened
+    [incident] = engine.evaluate(snapshot, [], NOW, _ids()).opened
     assert incident.rule_ids == ["R-5XX", "R-LAT", "C-USER-IMPACT"]
     assert incident.severity == "high"
     assert incident.title == "User-facing errors and latency on api-01"
@@ -131,5 +134,5 @@ def test_latency_and_errors_together_raise_severity_and_name_the_incident():
 
 def test_evidence_keeps_every_series_of_the_resource():
     memory = _signal([50.0] * 110, "memory_used")
-    [incident] = engine.evaluate(_snapshot(CPU_BREACH, memory), set(), NOW, _ids()).opened
+    [incident] = engine.evaluate(_snapshot(CPU_BREACH, memory), [], NOW, _ids()).opened
     assert {s.signal for s in incident.evidence.series} == {"cpu_utilization", "memory_used"}

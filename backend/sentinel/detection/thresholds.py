@@ -35,5 +35,9 @@ LAT_MIN_BASELINE_DATA = timedelta(minutes=30)
 # R-5XX and R-LAT: below this many requests during the breach, a percentage means little.
 MIN_REQUESTS = 50
 
+# Resolution: every condition of an open incident must be clean (data present, not
+# breaching, no gap) for at least this long.
+RESOLVE_CLEAN_DURATION = timedelta(minutes=10)
+
 # How much history before the breach is kept as evidence with the incident.
 EVIDENCE_LOOKBACK = timedelta(minutes=60)

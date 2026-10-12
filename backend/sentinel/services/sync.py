@@ -67,31 +67,36 @@ class SyncService:
             return run
 
         self._last_success_at = self._clock.now()
-        self._store.save_snapshot(snapshot)
-        result = engine.evaluate(
-            snapshot,
-            open_fingerprints=self._store.open_fingerprints(),
-            now=started,
-            allocate_id=self._store.next_incident_id,
-        )
-        for incident in result.opened:
-            self._store.add_incident(incident)
+        # Evaluation and every write happen in one transaction: a sync is stored whole or
+        # not at all, and no other request sees a half-applied sync.
+        with self._store.transaction():
+            self._store.save_snapshot(snapshot)
+            result = engine.evaluate(
+                snapshot,
+                open_incidents=self._store.open_incidents(),
+                now=started,
+                allocate_id=self._store.next_incident_id,
+            )
+            for incident in result.opened:
+                self._store.add_incident(incident)
+            for incident in result.updated + result.resolved:
+                self._store.update_incident(incident)
 
-        run = SyncRun(
-            id=self._store.next_sync_id(),
-            started_at=started,
-            finished_at=self._clock.now(),
-            status="success",
-            collectors=[
-                CollectorStatus(
-                    name=self._source.name, state="ok", last_success_at=self._last_success_at
-                )
-            ],
-            resources_evaluated=result.resources_evaluated,
-            rules_evaluated=result.rules_evaluated,
-            incidents_opened=len(result.opened),
-            incidents_updated=0,
-            incidents_resolved=0,
-        )
-        self._store.record_sync(run)
+            run = SyncRun(
+                id=self._store.next_sync_id(),
+                started_at=started,
+                finished_at=self._clock.now(),
+                status="success",
+                collectors=[
+                    CollectorStatus(
+                        name=self._source.name, state="ok", last_success_at=self._last_success_at
+                    )
+                ],
+                resources_evaluated=result.resources_evaluated,
+                rules_evaluated=result.rules_evaluated,
+                incidents_opened=len(result.opened),
+                incidents_updated=len(result.updated),
+                incidents_resolved=len(result.resolved),
+            )
+            self._store.record_sync(run)
         return run

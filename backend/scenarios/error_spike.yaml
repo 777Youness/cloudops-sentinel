@@ -22,6 +22,8 @@ signals:
     segments:
       - { from_min: -12, to_min: 0, value: 9 }    # >= 5%: full tier, severity high
   latency_p95: { baseline: 180, noise: 15 }
+events:
+  - { id: deploy-v2-3-1, at_min: -13, kind: deployment, label: "Deploy v2.3.1 of the API" }
 expected:
   incident: true
   rules: [R-5XX]

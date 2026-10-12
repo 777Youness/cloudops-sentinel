@@ -7,20 +7,23 @@ Conventions: all timestamps are timezone-aware UTC, serialized ISO 8601 with `Z`
 numeric value that has a unit carries a `unit` field. Missing data stays missing; it is
 never represented as 0.
 
-## Implemented (Day 1, milestone 2a)
+## Implemented (Day 1, milestones 2a and 2b)
 
 **Observations** (`observations.py`)
 - `Resource`: id, kind (`ec2_instance`), name, region, state, instance_type, credit_mode,
   tags, `data_origin` (`simulated` | `aws`).
 - `MetricSeries`: resource_id, signal, unit, statistic, period_seconds, source, points
   (oldest → newest, complete periods only).
-- `ObservationSnapshot`: collected_at, window, data_origin, resources, series.
+- `OpsEvent`: id (stable across syncs), resource_id, kind (`deployment`), at, label,
+  source, data_origin. An observation: code never claims an event caused an incident.
+- `ObservationSnapshot`: collected_at, window, data_origin, resources, series, events.
 
 **Incidents** (`incidents.py`)
 - `Fact`: id (`F1`…, unique within its incident), kind (`threshold_breach`,
   `baseline_deviation`, `within_normal`, `data_gap` are produced since milestone 2a; `event`,
-  `alarm_state`, `log_pattern` are reserved), statement (template-generated),
-  source, resource_id, observed_at, window, rule_id, signal, value, baseline, threshold, unit.
+  `event` since 2b; `alarm_state`, `log_pattern` are reserved), statement (template-generated),
+  source, resource_id, observed_at, window, rule_id, signal, value, baseline, threshold, unit,
+  event_id (for `event` facts). Facts are append-only: once stored, a fact never changes.
 - `TimelineEntry`: at, kind, label, fact_id.
 - `Incident`: id (`INC-0001`), fingerprint (resource id), title, severity (rule-based),
   status, resource, region, data_origin, rule_ids, detection times, key_signals, facts,
@@ -35,7 +38,7 @@ never represented as 0.
 
 ## Planned (not implemented)
 
-- Day 2 (2b, 2c): `OpsEvent` (deployment events), incident lifecycle fields, `Overview`,
-  incident detail. `LogSample` and `ResourceSummary` follow with AWS mode.
+- Day 2 (2c): `Overview`, incident detail. `LogSample` and `ResourceSummary` follow with
+  AWS mode.
 - Day 3: `Investigation`, `Hypothesis` (must cite ≥ 1 existing fact ID), `NextCheck`,
   `RemediationOption` (`requires_human` always true), investigation metadata.

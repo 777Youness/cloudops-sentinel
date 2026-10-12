@@ -1,0 +1,43 @@
+# Multi-phase: CPU saturation opens an incident; on the next sync the breach ended
+# 13 minutes ago and the incident resolves; on the third sync CPU saturates again and,
+# because the first incident is resolved, a NEW incident opens. Phases advance one per
+# sync and the last one repeats. Offsets are minutes relative to "now" (0).
+id: recovery
+title: Saturation that recovers, then returns
+resource:
+  id: sim-recovery
+  name: sim-api-05
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 41
+signals:
+  cpu_credit_balance: { baseline: 80, noise: 1 }
+  memory_used: { baseline: 45, noise: 2 }
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 120, noise: 10 }
+  error_rate_5xx: { baseline: 0.3, noise: 0.2 }
+  latency_p95: { baseline: 180, noise: 15 }
+phases:
+  - signals:
+      cpu_utilization:
+        baseline: 35
+        noise: 3
+        segments:
+          - { from_min: -20, to_min: 0, value: 97 }
+    expected: { incident: true, outcome: opened, rules: [R-CPU-SAT], severity: medium }
+  - signals:
+      cpu_utilization:
+        baseline: 35
+        noise: 3
+        segments:
+          - { from_min: -35, to_min: -13, value: 97 }   # ended 13 min ago: clean >= 10 min
+    expected: { incident: false, outcome: resolved }
+  - signals:
+      cpu_utilization:
+        baseline: 35
+        noise: 3
+        segments:
+          - { from_min: -12, to_min: 0, value: 97 }
+    expected: { incident: true, outcome: opened, rules: [R-CPU-SAT], severity: medium }

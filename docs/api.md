@@ -9,7 +9,7 @@ Base path `/api/v1`. The OpenAPI document (`/openapi.json`, also committed at
 |---|---|---|---|
 | GET | `/health` | `{"status": "ok"}` (liveness, touches nothing) | — |
 | GET | `/system` | `SystemStatus` (mode, environment, region, LLM status, last sync) | — |
-| POST | `/sync` | `SyncRun`. 200 even if the sync failed: read `status`. | 409 `SYNC_IN_PROGRESS` |
+| POST | `/sync` | `SyncRun` with `incidents_opened`, `incidents_updated`, `incidents_resolved`. 200 even if the sync failed: read `status`. | 409 `SYNC_IN_PROGRESS` |
 | GET | `/incidents?status=open\|resolved\|all` | `{items: IncidentSummary[], total}`, severity then recency | 422 `VALIDATION_ERROR` |
 
 ## Planned
