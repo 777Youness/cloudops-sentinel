@@ -43,6 +43,11 @@ def build_bundle(incident: Incident) -> dict[str, Any]:
                 "kind": f.kind,
                 "statement": _clip(f.statement),
                 "observed_at": f.observed_at.isoformat(),
+                "window": (
+                    {"start": f.window.start.isoformat(), "end": f.window.end.isoformat()}
+                    if f.window
+                    else None
+                ),
                 "rule_id": f.rule_id,
                 "signal": f.signal,
                 "value": f.value,
