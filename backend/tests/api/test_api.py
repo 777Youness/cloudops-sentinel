@@ -120,8 +120,9 @@ def test_incidents_survive_a_restart(clock, tmp_path):
 
 
 def test_default_database_is_one_file_per_mode():
-    assert Settings(mode="local").resolved_db_path().endswith("sentinel-local.db")
-    assert Settings(mode="aws").resolved_db_path().endswith("sentinel-aws.db")
+    # db_path=None explicitly: the test session sets SENTINEL_DB_PATH (see conftest.py).
+    assert Settings(mode="local", db_path=None).resolved_db_path().endswith("sentinel-local.db")
+    assert Settings(mode="aws", db_path=None).resolved_db_path().endswith("sentinel-aws.db")
 
 
 # --- incident detail ---------------------------------------------------------------------
