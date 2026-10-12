@@ -63,3 +63,13 @@ def test_import_rules(path: Path):
         if root in CONFINED:
             allowed = CONFINED[root]
             assert any(rel.startswith(a) for a in allowed), f"{rel} may not import {root}"
+
+
+@pytest.mark.parametrize(
+    "path", sorted((PACKAGE / "api" / "routes").glob("*.py")), ids=lambda p: p.name
+)
+def test_routes_do_not_touch_the_store(path: Path):
+    """CLAUDE.md: api/ calls services/ only. Routes contain no business logic."""
+    source = path.read_text()
+    assert ".store" not in source, f"{path.name} reaches the store directly; use a service"
+    assert "sentinel.store" not in source, f"{path.name} imports the store; use a service"

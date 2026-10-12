@@ -124,6 +124,157 @@
         "title": "ErrorResponse",
         "type": "object"
       },
+      "Fact": {
+        "properties": {
+          "baseline": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline"
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "threshold_breach",
+              "baseline_deviation",
+              "within_normal",
+              "event",
+              "alarm_state",
+              "log_pattern",
+              "data_gap"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id"
+          },
+          "signal": {
+            "anyOf": [
+              {
+                "enum": [
+                  "cpu_utilization",
+                  "cpu_credit_balance",
+                  "memory_used",
+                  "status_check_failed",
+                  "latency_p95",
+                  "error_rate_5xx",
+                  "request_rate"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signal"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "statement": {
+            "title": "Statement",
+            "type": "string"
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Threshold"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "enum": [
+                  "percent",
+                  "credits",
+                  "count",
+                  "ms",
+                  "per_minute"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "window": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TimeWindow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "statement",
+          "source",
+          "resource_id",
+          "observed_at"
+        ],
+        "title": "Fact",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -147,6 +298,155 @@
           }
         },
         "title": "Health",
+        "type": "object"
+      },
+      "Incident": {
+        "properties": {
+          "data_origin": {
+            "enum": [
+              "simulated",
+              "aws"
+            ],
+            "title": "Data Origin",
+            "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/IncidentEvidence"
+          },
+          "evidence_hash": {
+            "title": "Evidence Hash",
+            "type": "string"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "fingerprint": {
+            "title": "Fingerprint",
+            "type": "string"
+          },
+          "first_detected_at": {
+            "format": "date-time",
+            "title": "First Detected At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "key_signals": {
+            "items": {
+              "$ref": "#/components/schemas/KeySignal"
+            },
+            "title": "Key Signals",
+            "type": "array"
+          },
+          "last_updated_at": {
+            "format": "date-time",
+            "title": "Last Updated At",
+            "type": "string"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_name": {
+            "title": "Resource Name",
+            "type": "string"
+          },
+          "rule_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Rule Ids",
+            "type": "array"
+          },
+          "severity": {
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "critical"
+            ],
+            "title": "Severity",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "resolved"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEntry"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fingerprint",
+          "title",
+          "severity",
+          "status",
+          "resource_id",
+          "resource_name",
+          "region",
+          "data_origin",
+          "rule_ids",
+          "first_detected_at",
+          "last_updated_at",
+          "key_signals",
+          "facts",
+          "timeline",
+          "evidence",
+          "evidence_hash"
+        ],
+        "title": "Incident",
+        "type": "object"
+      },
+      "IncidentEvidence": {
+        "description": "Snapshot of the data the incident was built from, kept with the incident so\ncharts and investigations stay reproducible after the collection window moves on.",
+        "properties": {
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/MetricSeries"
+            },
+            "title": "Series",
+            "type": "array"
+          }
+        },
+        "required": [
+          "series"
+        ],
+        "title": "IncidentEvidence",
         "type": "object"
       },
       "IncidentList": {
@@ -340,6 +640,333 @@
         "title": "LlmStatus",
         "type": "object"
       },
+      "MetricPoint": {
+        "properties": {
+          "t": {
+            "format": "date-time",
+            "title": "T",
+            "type": "string"
+          },
+          "v": {
+            "title": "V",
+            "type": "number"
+          }
+        },
+        "required": [
+          "t",
+          "v"
+        ],
+        "title": "MetricPoint",
+        "type": "object"
+      },
+      "MetricSeries": {
+        "description": "One signal for one resource.\n\nPoints are ordered oldest to newest and contain complete periods only.\nA missing period stays missing: it is never filled with 0.",
+        "properties": {
+          "period_seconds": {
+            "title": "Period Seconds",
+            "type": "integer"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/MetricPoint"
+            },
+            "title": "Points",
+            "type": "array"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "signal": {
+            "enum": [
+              "cpu_utilization",
+              "cpu_credit_balance",
+              "memory_used",
+              "status_check_failed",
+              "latency_p95",
+              "error_rate_5xx",
+              "request_rate"
+            ],
+            "title": "Signal",
+            "type": "string"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "statistic": {
+            "enum": [
+              "Average",
+              "Maximum",
+              "p95",
+              "Sum"
+            ],
+            "title": "Statistic",
+            "type": "string"
+          },
+          "unit": {
+            "enum": [
+              "percent",
+              "credits",
+              "count",
+              "ms",
+              "per_minute"
+            ],
+            "title": "Unit",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id",
+          "signal",
+          "unit",
+          "statistic",
+          "period_seconds",
+          "source",
+          "points"
+        ],
+        "title": "MetricSeries",
+        "type": "object"
+      },
+      "Overview": {
+        "properties": {
+          "data_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data As Of"
+          },
+          "data_origin": {
+            "anyOf": [
+              {
+                "enum": [
+                  "simulated",
+                  "aws"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Origin"
+          },
+          "last_sync": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyncRun"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mode": {
+            "enum": [
+              "local",
+              "aws"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "open_by_severity": {
+            "$ref": "#/components/schemas/SeverityCounts"
+          },
+          "open_total": {
+            "title": "Open Total",
+            "type": "integer"
+          },
+          "resources": {
+            "items": {
+              "$ref": "#/components/schemas/ResourceHealth"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "top_open_incidents": {
+            "items": {
+              "$ref": "#/components/schemas/IncidentSummary"
+            },
+            "title": "Top Open Incidents",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "data_origin",
+          "last_sync",
+          "data_as_of",
+          "open_total",
+          "open_by_severity",
+          "top_open_incidents",
+          "resources"
+        ],
+        "title": "Overview",
+        "type": "object"
+      },
+      "ResourceHealth": {
+        "description": "Health of one monitored resource, from the latest snapshot and its open incident.\n\n`signals_missing` lists every expected signal with no datapoint in the latest\nsnapshot: missing data is reported, never shown as 0 or as healthy by omission.",
+        "properties": {
+          "data_origin": {
+            "enum": [
+              "simulated",
+              "aws"
+            ],
+            "title": "Data Origin",
+            "type": "string"
+          },
+          "health": {
+            "enum": [
+              "ok",
+              "warn",
+              "crit",
+              "unknown"
+            ],
+            "title": "Health",
+            "type": "string"
+          },
+          "instance_type": {
+            "title": "Instance Type",
+            "type": "string"
+          },
+          "last_datapoint_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Datapoint At"
+          },
+          "open_incident_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Incident Id"
+          },
+          "open_incident_severity": {
+            "anyOf": [
+              {
+                "enum": [
+                  "low",
+                  "medium",
+                  "high",
+                  "critical"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Open Incident Severity"
+          },
+          "resource_id": {
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "resource_name": {
+            "title": "Resource Name",
+            "type": "string"
+          },
+          "signals_expected": {
+            "items": {
+              "enum": [
+                "cpu_utilization",
+                "cpu_credit_balance",
+                "memory_used",
+                "status_check_failed",
+                "latency_p95",
+                "error_rate_5xx",
+                "request_rate"
+              ],
+              "type": "string"
+            },
+            "title": "Signals Expected",
+            "type": "array"
+          },
+          "signals_missing": {
+            "items": {
+              "enum": [
+                "cpu_utilization",
+                "cpu_credit_balance",
+                "memory_used",
+                "status_check_failed",
+                "latency_p95",
+                "error_rate_5xx",
+                "request_rate"
+              ],
+              "type": "string"
+            },
+            "title": "Signals Missing",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "running",
+              "stopping",
+              "stopped",
+              "terminated",
+              "unknown"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resource_id",
+          "resource_name",
+          "instance_type",
+          "state",
+          "data_origin",
+          "health",
+          "signals_expected",
+          "signals_missing"
+        ],
+        "title": "ResourceHealth",
+        "type": "object"
+      },
+      "SeverityCounts": {
+        "properties": {
+          "critical": {
+            "default": 0,
+            "title": "Critical",
+            "type": "integer"
+          },
+          "high": {
+            "default": 0,
+            "title": "High",
+            "type": "integer"
+          },
+          "low": {
+            "default": 0,
+            "title": "Low",
+            "type": "integer"
+          },
+          "medium": {
+            "default": 0,
+            "title": "Medium",
+            "type": "integer"
+          }
+        },
+        "title": "SeverityCounts",
+        "type": "object"
+      },
       "SyncRun": {
         "properties": {
           "collectors": {
@@ -414,6 +1041,18 @@
             "title": "Contract Version",
             "type": "string"
           },
+          "data_as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data As Of"
+          },
           "environment": {
             "title": "Environment",
             "type": "string"
@@ -457,6 +1096,70 @@
           "llm"
         ],
         "title": "SystemStatus",
+        "type": "object"
+      },
+      "TimeWindow": {
+        "properties": {
+          "end": {
+            "format": "date-time",
+            "title": "End",
+            "type": "string"
+          },
+          "start": {
+            "format": "date-time",
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "TimeWindow",
+        "type": "object"
+      },
+      "TimelineEntry": {
+        "properties": {
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "fact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fact Id"
+          },
+          "kind": {
+            "enum": [
+              "event",
+              "breach_start",
+              "alarm",
+              "incident_opened",
+              "incident_updated",
+              "incident_resolved",
+              "investigation"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "kind",
+          "label"
+        ],
+        "title": "TimelineEntry",
         "type": "object"
       },
       "ValidationError": {
@@ -576,6 +1279,81 @@
         "summary": "List Incidents",
         "tags": [
           "incidents"
+        ]
+      }
+    },
+    "/api/v1/incidents/{incident_id}": {
+      "get": {
+        "description": "One incident with everything stored for it: facts, timeline, evidence series,\nrule ids and evidence hash. 404 NOT_FOUND if the id is unknown.",
+        "operationId": "get_incident_api_v1_incidents__incident_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Incident"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Incident",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/api/v1/overview": {
+      "get": {
+        "description": "Open incidents by severity, the most important ones, data trust and resource health.\nReads stored data only.",
+        "operationId": "overview_api_v1_overview_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Overview",
+        "tags": [
+          "overview"
         ]
       }
     },

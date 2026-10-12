@@ -7,7 +7,7 @@ Conventions: all timestamps are timezone-aware UTC, serialized ISO 8601 with `Z`
 numeric value that has a unit carries a `unit` field. Missing data stays missing; it is
 never represented as 0.
 
-## Implemented (Day 1, milestones 2a and 2b)
+## Implemented (Day 1, milestones 2a, 2b, 2c)
 
 **Observations** (`observations.py`)
 - `Resource`: id, kind (`ec2_instance`), name, region, state, instance_type, credit_mode,
@@ -31,14 +31,20 @@ never represented as 0.
 - `IncidentSummary`: the list view of an incident, plus `investigation_status`.
 
 **System** (`system.py`)
-- `CollectorStatus`, `SyncRun`, `SystemStatus`, `Health`.
+- `CollectorStatus`, `SyncRun`, `SystemStatus` (with `data_as_of`), `Health`.
+
+**Overview** (`overview.py`, since 2c)
+- `ResourceHealth`: resource id, name, instance type, state, data_origin, health
+  (`ok` | `warn` | `crit` | `unknown`, decided in `detection/health.py`), open incident id
+  and severity, expected signals, **missing signals** (listed, never zero), last datapoint.
+- `SeverityCounts`, `Overview` (mode, data_origin, last_sync, data_as_of, open counts,
+  top open incidents, resources).
 
 **Errors** (`errors.py`)
 - `SentinelError` subclasses with stable codes; `ErrorResponse` envelope.
 
 ## Planned (not implemented)
 
-- Day 2 (2c): `Overview`, incident detail. `LogSample` and `ResourceSummary` follow with
-  AWS mode.
+- Day 5: `LogSample` and `ResourceSummary` with AWS mode.
 - Day 3: `Investigation`, `Hypothesis` (must cite ≥ 1 existing fact ID), `NextCheck`,
   `RemediationOption` (`requires_human` always true), investigation metadata.

@@ -44,6 +44,48 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/incidents/{incident_id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get Incident
+     * @description One incident with everything stored for it: facts, timeline, evidence series,
+     *     rule ids and evidence hash. 404 NOT_FOUND if the id is unknown.
+     */
+    get: operations['get_incident_api_v1_incidents__incident_id__get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/overview': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Overview
+     * @description Open incidents by severity, the most important ones, data trust and resource health.
+     *     Reads stored data only.
+     */
+    get: operations['overview_api_v1_overview_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/sync': {
     parameters: {
       query?: never;
@@ -126,6 +168,59 @@ export interface components {
     ErrorResponse: {
       error: components['schemas']['ErrorBody'];
     };
+    /** Fact */
+    Fact: {
+      /** Baseline */
+      baseline?: number | null;
+      /** Event Id */
+      event_id?: string | null;
+      /** Id */
+      id: string;
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind:
+        | 'threshold_breach'
+        | 'baseline_deviation'
+        | 'within_normal'
+        | 'event'
+        | 'alarm_state'
+        | 'log_pattern'
+        | 'data_gap';
+      /**
+       * Observed At
+       * Format: date-time
+       */
+      observed_at: string;
+      /** Resource Id */
+      resource_id: string;
+      /** Rule Id */
+      rule_id?: string | null;
+      /** Signal */
+      signal?:
+        | (
+            | 'cpu_utilization'
+            | 'cpu_credit_balance'
+            | 'memory_used'
+            | 'status_check_failed'
+            | 'latency_p95'
+            | 'error_rate_5xx'
+            | 'request_rate'
+          )
+        | null;
+      /** Source */
+      source: string;
+      /** Statement */
+      statement: string;
+      /** Threshold */
+      threshold?: number | null;
+      /** Unit */
+      unit?: ('percent' | 'credits' | 'count' | 'ms' | 'per_minute') | null;
+      /** Value */
+      value?: number | null;
+      window?: components['schemas']['TimeWindow'] | null;
+    };
     /** HTTPValidationError */
     HTTPValidationError: {
       /** Detail */
@@ -139,6 +234,68 @@ export interface components {
        * @constant
        */
       status: 'ok';
+    };
+    /** Incident */
+    Incident: {
+      /**
+       * Data Origin
+       * @enum {string}
+       */
+      data_origin: 'simulated' | 'aws';
+      evidence: components['schemas']['IncidentEvidence'];
+      /** Evidence Hash */
+      evidence_hash: string;
+      /** Facts */
+      facts: components['schemas']['Fact'][];
+      /** Fingerprint */
+      fingerprint: string;
+      /**
+       * First Detected At
+       * Format: date-time
+       */
+      first_detected_at: string;
+      /** Id */
+      id: string;
+      /** Key Signals */
+      key_signals: components['schemas']['KeySignal'][];
+      /**
+       * Last Updated At
+       * Format: date-time
+       */
+      last_updated_at: string;
+      /** Region */
+      region: string;
+      /** Resolved At */
+      resolved_at?: string | null;
+      /** Resource Id */
+      resource_id: string;
+      /** Resource Name */
+      resource_name: string;
+      /** Rule Ids */
+      rule_ids: string[];
+      /**
+       * Severity
+       * @enum {string}
+       */
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'open' | 'resolved';
+      /** Timeline */
+      timeline: components['schemas']['TimelineEntry'][];
+      /** Title */
+      title: string;
+    };
+    /**
+     * IncidentEvidence
+     * @description Snapshot of the data the incident was built from, kept with the incident so
+     *     charts and investigations stay reproducible after the collection window moves on.
+     */
+    IncidentEvidence: {
+      /** Series */
+      series: components['schemas']['MetricSeries'][];
     };
     /** IncidentList */
     IncidentList: {
@@ -218,6 +375,154 @@ export interface components {
       /** Provider */
       provider: string | null;
     };
+    /** MetricPoint */
+    MetricPoint: {
+      /**
+       * T
+       * Format: date-time
+       */
+      t: string;
+      /** V */
+      v: number;
+    };
+    /**
+     * MetricSeries
+     * @description One signal for one resource.
+     *
+     *     Points are ordered oldest to newest and contain complete periods only.
+     *     A missing period stays missing: it is never filled with 0.
+     */
+    MetricSeries: {
+      /** Period Seconds */
+      period_seconds: number;
+      /** Points */
+      points: components['schemas']['MetricPoint'][];
+      /** Resource Id */
+      resource_id: string;
+      /**
+       * Signal
+       * @enum {string}
+       */
+      signal:
+        | 'cpu_utilization'
+        | 'cpu_credit_balance'
+        | 'memory_used'
+        | 'status_check_failed'
+        | 'latency_p95'
+        | 'error_rate_5xx'
+        | 'request_rate';
+      /** Source */
+      source: string;
+      /**
+       * Statistic
+       * @enum {string}
+       */
+      statistic: 'Average' | 'Maximum' | 'p95' | 'Sum';
+      /**
+       * Unit
+       * @enum {string}
+       */
+      unit: 'percent' | 'credits' | 'count' | 'ms' | 'per_minute';
+    };
+    /** Overview */
+    Overview: {
+      /** Data As Of */
+      data_as_of: string | null;
+      /** Data Origin */
+      data_origin: ('simulated' | 'aws') | null;
+      last_sync: components['schemas']['SyncRun'] | null;
+      /**
+       * Mode
+       * @enum {string}
+       */
+      mode: 'local' | 'aws';
+      open_by_severity: components['schemas']['SeverityCounts'];
+      /** Open Total */
+      open_total: number;
+      /** Resources */
+      resources: components['schemas']['ResourceHealth'][];
+      /** Top Open Incidents */
+      top_open_incidents: components['schemas']['IncidentSummary'][];
+    };
+    /**
+     * ResourceHealth
+     * @description Health of one monitored resource, from the latest snapshot and its open incident.
+     *
+     *     `signals_missing` lists every expected signal with no datapoint in the latest
+     *     snapshot: missing data is reported, never shown as 0 or as healthy by omission.
+     */
+    ResourceHealth: {
+      /**
+       * Data Origin
+       * @enum {string}
+       */
+      data_origin: 'simulated' | 'aws';
+      /**
+       * Health
+       * @enum {string}
+       */
+      health: 'ok' | 'warn' | 'crit' | 'unknown';
+      /** Instance Type */
+      instance_type: string;
+      /** Last Datapoint At */
+      last_datapoint_at?: string | null;
+      /** Open Incident Id */
+      open_incident_id?: string | null;
+      /** Open Incident Severity */
+      open_incident_severity?: ('low' | 'medium' | 'high' | 'critical') | null;
+      /** Resource Id */
+      resource_id: string;
+      /** Resource Name */
+      resource_name: string;
+      /** Signals Expected */
+      signals_expected: (
+        | 'cpu_utilization'
+        | 'cpu_credit_balance'
+        | 'memory_used'
+        | 'status_check_failed'
+        | 'latency_p95'
+        | 'error_rate_5xx'
+        | 'request_rate'
+      )[];
+      /** Signals Missing */
+      signals_missing: (
+        | 'cpu_utilization'
+        | 'cpu_credit_balance'
+        | 'memory_used'
+        | 'status_check_failed'
+        | 'latency_p95'
+        | 'error_rate_5xx'
+        | 'request_rate'
+      )[];
+      /**
+       * State
+       * @enum {string}
+       */
+      state: 'pending' | 'running' | 'stopping' | 'stopped' | 'terminated' | 'unknown';
+    };
+    /** SeverityCounts */
+    SeverityCounts: {
+      /**
+       * Critical
+       * @default 0
+       */
+      critical: number;
+      /**
+       * High
+       * @default 0
+       */
+      high: number;
+      /**
+       * Low
+       * @default 0
+       */
+      low: number;
+      /**
+       * Medium
+       * @default 0
+       */
+      medium: number;
+    };
     /** SyncRun */
     SyncRun: {
       /** Collectors */
@@ -254,6 +559,8 @@ export interface components {
     SystemStatus: {
       /** Contract Version */
       contract_version: string;
+      /** Data As Of */
+      data_as_of?: string | null;
       /** Environment */
       environment: string;
       last_sync?: components['schemas']['SyncRun'] | null;
@@ -267,6 +574,43 @@ export interface components {
       region: string;
       /** Version */
       version: string;
+    };
+    /** TimeWindow */
+    TimeWindow: {
+      /**
+       * End
+       * Format: date-time
+       */
+      end: string;
+      /**
+       * Start
+       * Format: date-time
+       */
+      start: string;
+    };
+    /** TimelineEntry */
+    TimelineEntry: {
+      /**
+       * At
+       * Format: date-time
+       */
+      at: string;
+      /** Fact Id */
+      fact_id?: string | null;
+      /**
+       * Kind
+       * @enum {string}
+       */
+      kind:
+        | 'event'
+        | 'breach_start'
+        | 'alarm'
+        | 'incident_opened'
+        | 'incident_updated'
+        | 'incident_resolved'
+        | 'investigation';
+      /** Label */
+      label: string;
     };
     /** ValidationError */
     ValidationError: {
@@ -337,6 +681,66 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  get_incident_api_v1_incidents__incident_id__get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        incident_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Incident'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  overview_api_v1_overview_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['Overview'];
         };
       };
     };

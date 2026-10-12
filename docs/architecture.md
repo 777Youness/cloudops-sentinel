@@ -28,7 +28,8 @@ collectors ──► domain ◄── detection
                  ▲
 investigation ───┘            (Day 3)
 services  → collectors, detection, investigation, store
-api       → services only
+            (sync.py writes; incidents.py and system.py read)
+api       → services only (routes never touch the store; tested)
 ```
 
 - `domain/`: pydantic + stdlib only.
