@@ -17,7 +17,10 @@ STDLIB = set(sys.stdlib_module_names)
 PURE_PACKAGES = {
     "domain": ({"sentinel.domain"}, {"pydantic"}),
     "detection": ({"sentinel.domain", "sentinel.detection"}, set()),
+    # investigation/ is pure except investigation/providers/ (the only LLM HTTP calls).
+    "investigation": ({"sentinel.domain", "sentinel.investigation"}, set()),
 }
+NOT_PURE = ("investigation/providers/",)
 # stdlib modules that mean I/O and are forbidden in the pure core
 FORBIDDEN_STDLIB_IN_CORE = {"sqlite3", "socket", "http", "urllib", "subprocess", "requests"}
 
@@ -52,7 +55,7 @@ def test_import_rules(path: Path):
     top = rel.split("/")[0]
     for name in _imports(path):
         root = name.split(".")[0]
-        if top in PURE_PACKAGES:
+        if top in PURE_PACKAGES and not rel.startswith(NOT_PURE):
             internal, third_party = PURE_PACKAGES[top]
             if root == "sentinel":
                 assert any(name.startswith(p) for p in internal), f"{rel} imports {name}"
