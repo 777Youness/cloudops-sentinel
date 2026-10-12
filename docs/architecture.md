@@ -28,7 +28,8 @@ collectors ──► domain ◄── detection
                  ▲
 investigation ───┘            (Day 3)
 services  → collectors, detection, investigation, store
-api       → services only
+            (sync.py writes; incidents.py and system.py read)
+api       → services only (routes never touch the store; tested)
 ```
 
 - `domain/`: pydantic + stdlib only.
@@ -89,7 +90,7 @@ restarts the phases.
 | 1 | Thin slice: scenario → R-CPU-SAT → memory store → API → generated types → Incidents page | Built; automated checks pass; manual break exercises deferred |
 | 2a | All V1 rules, `within_normal` / `data_gap` facts, one scenario per rule | Built; automated checks pass |
 | 2b | Full lifecycle (merge, peak severity, resolution), SQLite, deployment events | Built; automated checks pass |
-| 2c | `GET /incidents/{id}`, `GET /overview`, Overview page, Investigation workspace (no AI) | Not started |
+| 2c | `GET /incidents/{id}`, `GET /overview`, Overview page, Investigation workspace (no AI) | Built; automated checks pass; reviewed in a browser (simulated mode) |
 | 3 | Investigation engine: evidence bundle, provider interface, mock + one real provider, validation | Not started |
 | 4 | Terraform: bootstrap + dev env, workload, CloudWatch agent, SSM scripts | Not started |
 | 5 | AWS mode: Boto3 collectors, Resources pages | Not started |

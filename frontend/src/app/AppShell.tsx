@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 
+import { StaleNotice } from '../components/StaleNotice';
 import styles from './AppShell.module.css';
 import { ModeStrip } from './ModeStrip';
 import { Sidebar } from './Sidebar';
@@ -15,6 +16,7 @@ export function AppShell() {
         <div className={styles.main}>
           <TopBar />
           <main className={styles.content}>
+            <StaleNotice />
             <Outlet />
           </main>
         </div>

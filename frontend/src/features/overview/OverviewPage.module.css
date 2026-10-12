@@ -1,0 +1,170 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+.h1 {
+  font-size: var(--fs-20);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+.h2 {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-semibold);
+}
+
+/* Open incidents by severity: tags with counts, no tiles. */
+.severities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-6);
+}
+.severities > div {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.severities dd {
+  font-size: var(--fs-16);
+  font-weight: var(--fw-semibold);
+}
+.zero {
+  opacity: 0.5;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: var(--sp-8);
+  align-items: start;
+}
+@media (max-width: 1279px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Tables follow the Incidents table. */
+.table {
+  width: 100%;
+  border-top: var(--rule-strong);
+}
+.table th {
+  height: 32px;
+  padding: 0 var(--sp-3);
+  text-align: left;
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+  border-bottom: var(--rule);
+  white-space: nowrap;
+}
+.row td {
+  height: var(--row-height);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: var(--rule);
+  vertical-align: middle;
+}
+.row td:first-child {
+  box-shadow: inset 3px 0 0 var(--sev-color, transparent);
+  padding-left: var(--sp-4);
+}
+.sev_critical,
+.sev_high {
+  --sev-color: var(--crit);
+}
+.sev_medium {
+  --sev-color: var(--warn);
+}
+.sev_low {
+  --sev-color: var(--border-strong);
+}
+.titleLink {
+  display: block;
+  font-weight: var(--fw-medium);
+  color: var(--text-1);
+}
+.titleLink:hover {
+  color: var(--accent);
+}
+.sub {
+  display: block;
+  font-size: var(--fs-12);
+  color: var(--text-3);
+}
+.signal {
+  display: inline-flex;
+  gap: var(--sp-2);
+  margin-right: var(--sp-3);
+}
+.signalLabel {
+  color: var(--text-2);
+}
+.more {
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-12);
+}
+.none {
+  color: var(--text-3);
+}
+.missing {
+  display: block;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+
+/* Data trust: key-value pairs. */
+.trust {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--rule-strong);
+}
+.trust > div {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0;
+  border-bottom: var(--rule);
+}
+.trust dt {
+  color: var(--text-3);
+}
+.collector {
+  display: block;
+}
+.stale {
+  margin-left: var(--sp-2);
+  font-size: var(--fs-12);
+  font-weight: var(--fw-semibold);
+  color: var(--warn);
+}
+.failed {
+  color: var(--crit);
+}
+
+/* Health: shape and text carry the meaning; color reinforces it. */
+.health {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-2); /* 4 px on an 8 px dot: a circle within the 4 px limit */
+  flex: none;
+}
+.health_ok {
+  background: var(--ok);
+}
+.health_warn {
+  background: var(--warn);
+}
+.health_crit {
+  background: var(--crit);
+}
+.health_unknown {
+  border: 1.5px solid var(--unknown);
+  background: transparent;
+}

@@ -1,5 +1,5 @@
 /** Formatting rules from docs/design-system.md. */
-import type { KeySignal } from '../api/types';
+import type { KeySignal, SignalName, Unit } from '../api/types';
 
 export function formatUtc(iso: string): string {
   const d = new Date(iso);
@@ -30,18 +30,39 @@ export function formatDurationMs(ms: number): string {
   return `${(ms / 1000).toFixed(1)} s`;
 }
 
-export function formatSignalValue(signal: KeySignal): string {
-  switch (signal.unit) {
+export function formatValue(value: number, unit: Unit): string {
+  switch (unit) {
     case 'percent':
-      return `${signal.value.toFixed(1)}%`;
+      return `${value.toFixed(1)}%`;
     case 'ms':
-      return `${Math.round(signal.value).toLocaleString('en-US')} ms`;
+      return `${Math.round(value).toLocaleString('en-US')} ms`;
     case 'per_minute':
-      return `${Math.round(signal.value)}/min`;
+      return `${Math.round(value)}/min`;
     case 'credits':
-      return `${signal.value.toFixed(1)} credits`;
+      return `${value.toFixed(1)} credits`;
     case 'count':
-      return String(Math.round(signal.value));
+      return String(Math.round(value));
+  }
+}
+
+export function formatSignalValue(signal: KeySignal): string {
+  return formatValue(signal.value, signal.unit);
+}
+
+/** A threshold or axis value: no needless decimals (90%, 5 credits, 540 ms). */
+export function formatLimit(value: number, unit: Unit): string {
+  const n = Number.isInteger(value) ? String(value) : value.toFixed(1);
+  switch (unit) {
+    case 'percent':
+      return `${n}%`;
+    case 'ms':
+      return `${Math.round(value).toLocaleString('en-US')} ms`;
+    case 'per_minute':
+      return `${n}/min`;
+    case 'credits':
+      return `${n} cr`;
+    case 'count':
+      return n;
   }
 }
 
@@ -54,6 +75,21 @@ export const SIGNAL_LABELS: Record<KeySignal['signal'], string> = {
   error_rate_5xx: '5xx rate',
   request_rate: 'Requests',
 };
+
+/** Full signal names, for chart titles and table headers. */
+export const SIGNAL_TITLES: Record<SignalName, string> = {
+  cpu_utilization: 'CPU utilization',
+  cpu_credit_balance: 'CPU credit balance',
+  memory_used: 'Memory utilization',
+  status_check_failed: 'EC2 status check',
+  latency_p95: 'p95 latency',
+  error_rate_5xx: '5xx error rate',
+  request_rate: 'Request rate',
+};
+
+export function formatPeriod(seconds: number): string {
+  return seconds % 60 === 0 ? `${seconds / 60} min` : `${seconds} s`;
+}
 
 export function plural(count: number, singular: string, pluralForm = `${singular}s`): string {
   return `${count} ${count === 1 ? singular : pluralForm}`;

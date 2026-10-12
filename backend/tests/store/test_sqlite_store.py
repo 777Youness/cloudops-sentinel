@@ -137,3 +137,11 @@ def test_newer_schema_is_refused(tmp_path):
         db.execute(f"PRAGMA user_version = {SCHEMA_VERSION + 1}")
     with pytest.raises(RuntimeError, match="newer than this code"):
         SqliteStore(path)
+
+
+def test_last_successful_sync_skips_failed_runs(store):
+    assert store.last_successful_sync() is None
+    store.record_sync(_run("SYNC-0001", minutes=0))
+    store.record_sync(_run("SYNC-0002", minutes=5).model_copy(update={"status": "failed"}))
+    assert store.last_sync().id == "SYNC-0002"
+    assert store.last_successful_sync().id == "SYNC-0001"

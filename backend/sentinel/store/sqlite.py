@@ -181,6 +181,16 @@ class SqliteStore:
             ).fetchone()
         return SyncRun.model_validate_json(row[0]) if row else None
 
+    def last_successful_sync(self) -> SyncRun | None:
+        """The newest sync whose data was stored. json_extract reads inside the JSON body,
+        so this needs no extra column (and no schema migration)."""
+        with self._lock:
+            row = self._db.execute(
+                "SELECT body FROM sync_runs WHERE json_extract(body, '$.status') = 'success' "
+                "ORDER BY started_at DESC, id DESC LIMIT 1"
+            ).fetchone()
+        return SyncRun.model_validate_json(row[0]) if row else None
+
     def close(self) -> None:
         with self._lock:
             self._db.close()

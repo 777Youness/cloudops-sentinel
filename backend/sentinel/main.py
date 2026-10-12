@@ -9,11 +9,13 @@ from fastapi import FastAPI
 
 from sentinel.api.deps import Container
 from sentinel.api.errors import install_error_handlers
-from sentinel.api.routes import incidents, sync, system
+from sentinel.api.routes import incidents, overview, sync, system
 from sentinel.clock import Clock, SystemClock
 from sentinel.collectors.simulated import SimulatedSource, load_scenarios
 from sentinel.config import VERSION, Settings
+from sentinel.services.incidents import IncidentService
 from sentinel.services.sync import SyncService
+from sentinel.services.system import SystemService
 from sentinel.store.sqlite import SqliteStore
 
 API_PREFIX = "/api/v1"
@@ -31,7 +33,14 @@ def build_container(settings: Settings, clock: Clock) -> Container:
     )
     store = SqliteStore(settings.resolved_db_path())
     sync = SyncService(source, store, clock, window=timedelta(minutes=settings.sync_window_minutes))
-    return Container(settings=settings, clock=clock, store=store, sync=sync)
+    return Container(
+        settings=settings,
+        clock=clock,
+        store=store,
+        sync=sync,
+        incidents=IncidentService(store, settings.mode),
+        system=SystemService(store, settings),
+    )
 
 
 def create_app(settings: Settings | None = None, clock: Clock | None = None) -> FastAPI:
@@ -43,7 +52,7 @@ def create_app(settings: Settings | None = None, clock: Clock | None = None) -> 
     )
     app.state.container = build_container(settings, clock or SystemClock())
     install_error_handlers(app)
-    for module in (system, sync, incidents):
+    for module in (system, sync, overview, incidents):
         app.include_router(module.router, prefix=API_PREFIX)
     return app
 

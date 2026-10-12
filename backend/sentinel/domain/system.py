@@ -50,6 +50,9 @@ class SystemStatus(BaseModel):
     region: str
     llm: LlmStatus
     last_sync: SyncRun | None = None
+    # When the stored data was collected: the last successful sync. The console marks
+    # data as stale from this, because a failed sync refreshes nothing.
+    data_as_of: AwareDatetime | None = None
 
 
 class Health(BaseModel):

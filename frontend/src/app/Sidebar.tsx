@@ -18,6 +18,9 @@ export function Sidebar() {
         <span className={styles.family}>CloudOps</span>
       </div>
       <nav aria-label="Main" className={styles.nav}>
+        <NavLink to="/" end className={linkClass}>
+          Overview
+        </NavLink>
         <NavLink to="/incidents" className={linkClass}>
           <span>Incidents</span>
           {openCount !== undefined && openCount > 0 && (
