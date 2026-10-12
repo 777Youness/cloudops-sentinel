@@ -34,6 +34,10 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - Contract-first types (OpenAPI → `schema.d.ts`, CI diff check): backend and frontend
   cannot drift silently.
 - Non-blocking lock for the sync (`threading.Lock().acquire(blocking=False)` → 409).
+- CloudWatch period semantics: a datapoint timestamped T aggregates [T, T + period). The
+  period containing "now" is incomplete, so the latest complete datapoint starts at
+  floor(now, period) − period (14:04 at 14:05:30). Treating the running period as complete
+  gave facts an `observed_at` in the future (fixed in `_latest_complete_period`).
 
 **Milestone 2a**
 - Trailing-run detection (`detection/rules.py::trailing_run`): why only the ongoing breach
