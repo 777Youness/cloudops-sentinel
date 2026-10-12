@@ -3,12 +3,11 @@
 Evidence-based incident investigation for AWS workloads.
 
 Sentinel collects operational telemetry, detects incidents with deterministic rules, and
-(from Day 3) asks an LLM to write an investigation in which every hypothesis must cite facts
+asks an LLM (on demand) to write an investigation in which every hypothesis must cite facts
 the code collected. Severity is rule-based. Humans decide on remediation.
 
-> **Status: V1 in progress — milestone 2c (Overview and incident workspace).** Only
-> simulated data exists so far. AWS mode, the investigation engine and the Resources
-> pages are not built yet. See [docs/architecture.md](docs/architecture.md) for the milestone plan.
+> **Status: V1 in progress — Day 3 (LLM-assisted investigation).** Only simulated data
+> exists so far. AWS mode and the Resources pages are not built yet. See [docs/architecture.md](docs/architecture.md) for the milestone plan.
 
 ## What works today
 
@@ -22,8 +21,13 @@ the code collected. Severity is rule-based. Humans decide on remediation.
 - All V1 rules (R-CPU-SAT, R-CPU-CREDIT, R-MEM, R-STATUS, R-5XX, R-LAT, C-USER-IMPACT),
   severity from one rule matrix, and facts that also record what was normal and what
   could not be checked. See [docs/detection-rules.md](docs/detection-rules.md).
-- API: `GET /api/v1/health`, `/system`, `/overview`, `/incidents`, `/incidents/{id}`;
-  `POST /api/v1/sync`.
+- API: `GET /api/v1/health`, `/system`, `/overview`, `/incidents`, `/incidents/{id}`,
+  `/incidents/{id}/investigation`; `POST /api/v1/sync`, `/incidents/{id}/investigation`.
+- Investigation: on demand, from the incident's stored facts only. Every hypothesis must
+  cite existing fact ids; invalid replies are rejected (one retry), never repaired; the
+  incident is never changed; outdated runs are flagged. Default provider: a deterministic
+  mock (no key, no network). Optional: any OpenAI-compatible endpoint, Ollama recommended
+  (see [ADR 0015](docs/adr/0015-investigation-provider.md) and `backend/.env.example`).
 - Console:
   - **Overview**: open incidents by severity, the most important ones, data trust (origin,
     data age, sources, what the last sync changed) and the health of every resource, with
@@ -73,7 +77,8 @@ CLAUDE.md   rules for AI-assisted development in this repository
 
 See [docs/adr](docs/adr). Key ones: Sentinel runs locally for V1 (0001), a pure detection
 core with enforced import rules (0002), only the sync collects data (0003), rule-based
-severity (0004), generated API types (0010), SQLite document store (0013).
+severity (0004), generated API types (0010), SQLite document store (0013), investigation
+provider (0015).
 
 ## Acknowledgements
 

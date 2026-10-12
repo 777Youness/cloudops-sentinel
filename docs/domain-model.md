@@ -58,4 +58,3 @@ never represented as 0.
 ## Planned (not implemented)
 
 - Day 5: `LogSample` and `ResourceSummary` with AWS mode.
-- Day 5: AWS-specific observations (see above).

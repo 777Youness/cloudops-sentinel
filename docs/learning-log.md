@@ -78,6 +78,20 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - Code splitting with a lazy route: the chart library loads only in the workspace.
 - Peer dependencies (`react-is`) and how to check whether a mismatch actually matters.
 
+**Day 3**
+- Grounding by construction: the model gets facts with ids and must cite them; a validator,
+  not trust, decides what is saved (`investigation/validator.py`).
+- Reject, don't repair: why a corrected reply would be Sentinel's words, not the model's.
+- Strict schemas (`extra="forbid"`): the model cannot add severity, risk or commands.
+- Prompt injection: data blocks, clipping, and why validation still matters after both.
+- Ports and adapters: `LlmProvider` as the port, mock and OpenAI-compatible as adapters.
+- `httpx.MockTransport`: testing an HTTP client without a network or a fake server.
+- Secrets: `SecretStr`, scrubbing echoed values, testing that a key never leaks.
+- Schema migrations for real (v1 to v2) and why a newer database is refused.
+- Content hashes for staleness (`evidence_hash`): "outdated" without timestamps.
+- Test isolation: a module-level object with side effects (sentinel.main's app) and how
+  it touched a developer's database until conftest.py fixed it.
+
 ## Milestone 2a — all detection rules
 
 - Date: 2026-10-12
@@ -108,3 +122,15 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - To try later: open a resolved incident and explain why its chart now ends on the
   recovered values (commit "fix(lifecycle): keep the clean window as evidence").
 - In my own words, why the UI never decides whether a value breaches:
+
+## Day 3 — LLM-assisted investigation
+
+- Date: 2026-10-12
+- Built: evidence bundle, prompt, strict schema and validator (one test per rejection
+  reason), mock and OpenAI-compatible providers, investigations table (schema v2), POST
+  and GET endpoints, outdated detection, investigation panel, ADR 0015.
+- Found and fixed: tests and `gen:api` were opening (and migrating) the developer's
+  database through sentinel.main's module-level app.
+- To try later: install Ollama, point the env vars at it (see `backend/.env.example`), run
+  an investigation, save it to `docs/examples/`, and count how often attempts = 2.
+- In my own words, why a schema alone is not enough to trust an LLM's reply:

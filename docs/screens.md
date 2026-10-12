@@ -5,7 +5,7 @@
 | `/incidents` | Incidents | What happened, how bad, what's still open? | Day 1 (rows link to the workspace since 2c) |
 | `/system` | System | Where does the data come from, and is it working? | Day 1 (minimal) |
 | `/` | Overview | What's wrong right now, and can I trust this data? | Day 2c |
-| `/incidents/:id` | Investigation workspace | Why did this happen, what do I check next? | Day 2c (evidence); Day 3 (investigation) |
+| `/incidents/:id` | Investigation workspace | Why did this happen, what do I check next? | Day 2c (evidence); Day 3 (investigation panel) |
 | `/resources`, `/resources/:id` | Resources | What am I monitoring, how is it behaving? | Day 5 |
 
 Cost (V2) and Drift (V3) are not routed in V1.
@@ -57,5 +57,7 @@ Built in Day 2c (evidence only):
 - Right (sticky, 400 px): Evidence (Observed, Checked and normal, Data gaps), then metadata:
   rules, evidence hash, last updated, investigation status ("Not run").
 
-Added in Day 3: Investigation (dashed rule, "Inferred"), Next checks, Remediation
-("Human decision"), Limitations. Until then these sections do not exist on the page.
+Day 3: the right panel is Evidence, then **Investigation** (see design-system
+"Investigation panel": dashed rule and "Inferred", hypotheses, next checks, remediation
+tagged "Human decision" and text only, limitations, run metadata, mock label, outdated
+notice), then Details. The Run button is the only control that calls a provider.
