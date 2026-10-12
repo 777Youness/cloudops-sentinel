@@ -371,6 +371,15 @@ def _try_resolve(
     timeline = incident.timeline + [
         TimelineEntry(at=now, kind="incident_resolved", label=statements.incident_resolved_label())
     ]
+    # Keep the clean window as evidence too: the charts must show the recovery the
+    # resolution facts describe, not end on the last breaching datapoint.
+    first_breach = min(
+        f.window.start for f in incident.facts if f.kind in BREACH_KINDS and f.window
+    )
+    since = first_breach - thresholds.EVIDENCE_LOOKBACK
+    evidence = IncidentEvidence(
+        series=_merge_series(incident.evidence.series, _evidence_series(series, since))
+    )
     return incident.model_copy(
         update={
             "status": "resolved",
@@ -378,7 +387,8 @@ def _try_resolve(
             "last_updated_at": now,
             "facts": facts,
             "timeline": timeline,
-            "evidence_hash": _evidence_hash(facts, incident.evidence),
+            "evidence": evidence,
+            "evidence_hash": _evidence_hash(facts, evidence),
         }
     )
 

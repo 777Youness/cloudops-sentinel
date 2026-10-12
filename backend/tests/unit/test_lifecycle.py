@@ -161,6 +161,16 @@ def test_resolves_after_exactly_ten_clean_minutes():
     assert cleared.statement.startswith("CPU utilization below 90% for 10 min since")
 
 
+def test_resolution_stores_the_clean_window_as_evidence():
+    # The charts are drawn from evidence: a resolved incident must show the recovery,
+    # not end on the last breaching datapoint.
+    incident, result = _resolve_with([40.0] * 90 + [97.0] * 10 + [40.0] * 10)
+    [resolved] = result.resolved
+    [cpu] = [s for s in resolved.evidence.series if s.signal == "cpu_utilization"]
+    assert cpu.points[-1].v == 40.0
+    assert resolved.evidence_hash != incident.evidence_hash
+
+
 def test_does_not_resolve_after_nine_clean_minutes():
     _, result = _resolve_with([40.0] * 90 + [97.0] * 10 + [40.0] * 9)
     assert result.resolved == []
