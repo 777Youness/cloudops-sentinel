@@ -27,6 +27,14 @@ const FILTERS: { value: IncidentStatusFilter; label: string }[] = [
 ];
 const COLUMNS = 8;
 
+const INVESTIGATION_LABELS: Record<IncidentSummary['investigation_status'], string> = {
+  not_run: 'Not run',
+  completed: 'Completed',
+  failed: 'Failed',
+  outdated: 'Outdated',
+  unavailable: 'Unavailable',
+};
+
 function parseFilter(raw: string | null): IncidentStatusFilter {
   return raw === 'resolved' || raw === 'all' ? raw : 'open';
 }
@@ -64,8 +72,8 @@ function IncidentRow({ incident, now }: { incident: IncidentSummary; now: number
         <span className={styles.relative}>{formatRelative(incident.first_detected_at, now)}</span>
       </td>
       <td>{incident.status === 'open' ? 'Open' : 'Resolved'}</td>
-      <td className={styles.muted}>
-        {incident.investigation_status === 'not_run' ? 'Not run' : incident.investigation_status}
+      <td className={incident.investigation_status === 'outdated' ? styles.outdated : styles.muted}>
+        {INVESTIGATION_LABELS[incident.investigation_status]}
       </td>
     </tr>
   );
