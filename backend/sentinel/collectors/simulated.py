@@ -152,10 +152,15 @@ def load_scenarios(directory: Path) -> list[Scenario]:
 
 
 def _latest_complete_period(now: datetime, period_seconds: int) -> datetime:
-    """Floor 'now' to the period boundary, like CloudWatch's latest complete datapoint."""
+    """Start of the latest *complete* period, like CloudWatch's latest datapoint.
+
+    A datapoint timestamped T covers [T, T + period). The period that contains `now` is
+    still running, so the latest complete one starts one period earlier:
+    floor(now, period) - period. At 14:05:30 with 60 s periods, that is 14:04.
+    """
     epoch = int(now.timestamp())
     floored = epoch - (epoch % period_seconds)
-    return datetime.fromtimestamp(floored, tz=now.tzinfo)
+    return datetime.fromtimestamp(floored - period_seconds, tz=now.tzinfo)
 
 
 def generate_series(scenario: Scenario, now: datetime, phase: int = 0) -> list[MetricSeries]:

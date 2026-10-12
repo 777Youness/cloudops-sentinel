@@ -18,10 +18,13 @@ def test_same_clock_same_data(clock):
 
 
 def test_series_ends_at_latest_complete_period(clock):
+    # A datapoint timestamped T covers [T, T + period). At 14:05:30 the 14:05 period is
+    # still running, so the latest complete one starts at 14:04 (as in CloudWatch).
     now = clock.now()  # 14:05:30
     snapshot = _source(clock).collect(now - timedelta(hours=3), now)
     last = snapshot.series[0].points[-1].t
-    assert last == now.replace(second=0)
+    assert last == now.replace(minute=4, second=0)
+    assert last + timedelta(seconds=snapshot.series[0].period_seconds) <= now
     assert all(p.t.tzinfo is not None for s in snapshot.series for p in s.points)
 
 
