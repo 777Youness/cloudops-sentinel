@@ -11,6 +11,7 @@ from sentinel.domain.incidents import (
 )
 from sentinel.domain.overview import Overview, SeverityCounts
 from sentinel.domain.system import Mode
+from sentinel.services.investigation import summary_status
 from sentinel.store.base import Store
 
 TOP_OPEN_INCIDENTS = 5
@@ -33,9 +34,14 @@ class IncidentService:
         self._store = store
         self._mode = mode
 
+    def _summaries(self, incidents: list[Incident]) -> list[IncidentSummary]:
+        latest = self._store.latest_investigations()
+        return [
+            IncidentSummary.from_incident(i, summary_status(latest.get(i.id), i)) for i in incidents
+        ]
+
     def list(self, status: IncidentStatus | None) -> IncidentList:
-        incidents = by_importance(self._store.list_incidents(status))
-        items = [IncidentSummary.from_incident(i) for i in incidents]
+        items = self._summaries(by_importance(self._store.list_incidents(status)))
         return IncidentList(items=items, total=len(items))
 
     def get(self, incident_id: str) -> Incident:
@@ -72,8 +78,6 @@ class IncidentService:
             data_as_of=last_success.finished_at if last_success else None,
             open_total=len(open_incidents),
             open_by_severity=counts,
-            top_open_incidents=[
-                IncidentSummary.from_incident(i) for i in open_incidents[:TOP_OPEN_INCIDENTS]
-            ],
+            top_open_incidents=self._summaries(open_incidents[:TOP_OPEN_INCIDENTS]),
             resources=resources,
         )

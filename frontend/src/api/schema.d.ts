@@ -65,6 +65,33 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/incidents/{incident_id}/investigation': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Latest Investigation
+     * @description The latest saved run, with `outdated` computed now. Never calls a provider.
+     *     404 if the incident is unknown or has never been investigated.
+     */
+    get: operations['latest_investigation_api_v1_incidents__incident_id__investigation_get'];
+    put?: never;
+    /**
+     * Run Investigation
+     * @description The only endpoint that calls an LLM provider. Returns 200 with status "failed" when
+     *     the provider or the validator rejected the run: the status describes the outcome.
+     *     404 unknown incident, 409 already running, 503 provider not configured.
+     */
+    post: operations['run_investigation_api_v1_incidents__incident_id__investigation_post'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/overview': {
     parameters: {
       query?: never;
@@ -235,6 +262,20 @@ export interface components {
        */
       status: 'ok';
     };
+    /** Hypothesis */
+    Hypothesis: {
+      /** Cites */
+      cites: string[];
+      /**
+       * Confidence
+       * @enum {string}
+       */
+      confidence: 'low' | 'medium' | 'high';
+      /** Id */
+      id: string;
+      /** Statement */
+      statement: string;
+    };
     /** Incident */
     Incident: {
       /**
@@ -322,7 +363,7 @@ export interface components {
        * Investigation Status
        * @enum {string}
        */
-      investigation_status: 'not_run' | 'completed' | 'failed' | 'unavailable';
+      investigation_status: 'not_run' | 'completed' | 'failed' | 'outdated' | 'unavailable';
       /** Key Signals */
       key_signals: components['schemas']['KeySignal'][];
       /** Resolved At */
@@ -343,6 +384,89 @@ export interface components {
       status: 'open' | 'resolved';
       /** Title */
       title: string;
+    };
+    /** Investigation */
+    Investigation: {
+      /** Attempts */
+      attempts: number;
+      error?: components['schemas']['InvestigationError'] | null;
+      /** Evidence Hash */
+      evidence_hash: string;
+      /** Fact Ids */
+      fact_ids: string[];
+      findings?: components['schemas']['InvestigationFindings'] | null;
+      /**
+       * Finished At
+       * Format: date-time
+       */
+      finished_at: string;
+      /** Id */
+      id: string;
+      /** Incident Id */
+      incident_id: string;
+      /** Model */
+      model: string;
+      /** Prompt Version */
+      prompt_version: string;
+      /** Provider */
+      provider: string;
+      /**
+       * Started At
+       * Format: date-time
+       */
+      started_at: string;
+      /**
+       * Status
+       * @enum {string}
+       */
+      status: 'completed' | 'failed';
+    };
+    /**
+     * InvestigationError
+     * @description Why a run failed: a provider error (timeout, auth, ...) or a validation reason.
+     */
+    InvestigationError: {
+      /** Code */
+      code: string;
+      /** Hint */
+      hint?: string | null;
+      /** Message */
+      message: string;
+    };
+    /** InvestigationFindings */
+    InvestigationFindings: {
+      /** Hypotheses */
+      hypotheses: components['schemas']['Hypothesis'][];
+      /**
+       * Limitations
+       * @default []
+       */
+      limitations: string[];
+      /**
+       * Next Checks
+       * @default []
+       */
+      next_checks: components['schemas']['NextCheck'][];
+      /**
+       * Remediation
+       * @default []
+       */
+      remediation: components['schemas']['RemediationOption'][];
+      /** Summary */
+      summary: string;
+    };
+    /**
+     * InvestigationResult
+     * @description What the API returns: the latest run plus what can only be known at read time.
+     */
+    InvestigationResult: {
+      /** Incident Evidence Hash */
+      incident_evidence_hash: string;
+      investigation: components['schemas']['Investigation'];
+      /** Outdated */
+      outdated: boolean;
+      /** Runs */
+      runs: number;
     };
     /** KeySignal */
     KeySignal: {
@@ -424,6 +548,15 @@ export interface components {
        */
       unit: 'percent' | 'credits' | 'count' | 'ms' | 'per_minute';
     };
+    /** NextCheck */
+    NextCheck: {
+      /** Cites */
+      cites: string[];
+      /** Description */
+      description: string;
+      /** Id */
+      id: string;
+    };
     /** Overview */
     Overview: {
       /** Data As Of */
@@ -443,6 +576,23 @@ export interface components {
       resources: components['schemas']['ResourceHealth'][];
       /** Top Open Incidents */
       top_open_incidents: components['schemas']['IncidentSummary'][];
+    };
+    /**
+     * RemediationOption
+     * @description Advice for a human. Descriptive text only: there is no command or action field.
+     */
+    RemediationOption: {
+      /** Cites */
+      cites: string[];
+      /** Description */
+      description: string;
+      /** Id */
+      id: string;
+      /**
+       * Requires Human
+       * @constant
+       */
+      requires_human: true;
     };
     /**
      * ResourceHealth
@@ -721,6 +871,104 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  latest_investigation_api_v1_incidents__incident_id__investigation_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        incident_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvestigationResult'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+    };
+  };
+  run_investigation_api_v1_incidents__incident_id__investigation_post: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        incident_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Successful Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InvestigationResult'];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
+        };
+      };
+      /** @description Validation Error */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['HTTPValidationError'];
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ErrorResponse'];
         };
       };
     };

@@ -12,6 +12,8 @@ from fastapi.responses import JSONResponse
 from sentinel.domain.errors import (
     ErrorBody,
     ErrorResponse,
+    InvestigationInProgressError,
+    LlmNotConfiguredError,
     NotFoundError,
     SentinelError,
     SyncInProgressError,
@@ -22,6 +24,9 @@ log = logging.getLogger("sentinel.api")
 HTTP_STATUS: dict[type[SentinelError], int] = {
     NotFoundError: 404,
     SyncInProgressError: 409,
+    InvestigationInProgressError: 409,
+    # The investigation feature is unavailable; everything else keeps working (principle 7).
+    LlmNotConfiguredError: 503,
 }
 
 # Documented error responses, reused in route declarations so they appear in OpenAPI.

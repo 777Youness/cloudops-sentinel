@@ -7,6 +7,7 @@ from fastapi import Request
 from sentinel.clock import Clock
 from sentinel.config import Settings
 from sentinel.services.incidents import IncidentService
+from sentinel.services.investigation import InvestigationService
 from sentinel.services.sync import SyncService
 from sentinel.services.system import SystemService
 from sentinel.store.base import Store
@@ -20,6 +21,7 @@ class Container:
     store: Store
     sync: SyncService
     incidents: IncidentService
+    investigations: InvestigationService
     system: SystemService
 
 

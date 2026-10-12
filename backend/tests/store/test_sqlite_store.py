@@ -145,3 +145,30 @@ def test_last_successful_sync_skips_failed_runs(store):
     store.record_sync(_run("SYNC-0002", minutes=5).model_copy(update={"status": "failed"}))
     assert store.last_sync().id == "SYNC-0002"
     assert store.last_successful_sync().id == "SYNC-0001"
+
+
+def test_migrates_a_version_1_database_without_losing_data(tmp_path):
+    """The first real migration: a Day 2 database gains the investigations table."""
+    from sentinel.store.sqlite import MIGRATIONS
+
+    path = tmp_path / "day2.db"
+    with closing(sqlite3.connect(path)) as db:
+        db.executescript(f"BEGIN; {MIGRATIONS[1]} PRAGMA user_version = 1; COMMIT;")
+        incident = _incident()
+        db.execute(
+            "INSERT INTO incidents VALUES (?, ?, ?, ?, ?)",
+            (
+                incident.id,
+                incident.fingerprint,
+                incident.status,
+                incident.first_detected_at.isoformat(),
+                incident.model_dump_json(),
+            ),
+        )
+        db.commit()
+    store = SqliteStore(path)
+    assert [i.id for i in store.list_incidents()] == ["INC-0001"]
+    assert store.latest_investigations() == {}
+    store.close()
+    with closing(sqlite3.connect(path)) as db:
+        assert db.execute("PRAGMA user_version").fetchone() == (2,)

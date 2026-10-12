@@ -15,11 +15,12 @@ from contextlib import contextmanager
 from pathlib import Path
 
 from sentinel.domain.incidents import Incident, IncidentStatus
+from sentinel.domain.investigation import Investigation
 from sentinel.domain.observations import ObservationSnapshot
 from sentinel.domain.system import SyncRun
 
 # Bump when the schema changes, and add a step to MIGRATIONS.
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 MIGRATIONS: dict[int, str] = {
     1: """
@@ -45,6 +46,17 @@ MIGRATIONS: dict[int, str] = {
             name  TEXT PRIMARY KEY,
             value INTEGER NOT NULL
         );
+    """,
+    # Day 3: investigations live in their own table. They reference an incident but never
+    # change it, and every run is kept.
+    2: """
+        CREATE TABLE investigations (
+            id          TEXT PRIMARY KEY,
+            incident_id TEXT NOT NULL,
+            started_at  TEXT NOT NULL,
+            body        TEXT NOT NULL
+        );
+        CREATE INDEX investigations_by_incident ON investigations (incident_id, started_at);
     """,
 }
 
@@ -190,6 +202,50 @@ class SqliteStore:
                 "ORDER BY started_at DESC, id DESC LIMIT 1"
             ).fetchone()
         return SyncRun.model_validate_json(row[0]) if row else None
+
+    def next_investigation_id(self) -> str:
+        return f"INV-{self._next('investigation'):04d}"
+
+    def add_investigation(self, investigation: Investigation) -> None:
+        with self._lock:
+            self._db.execute(
+                "INSERT INTO investigations (id, incident_id, started_at, body) "
+                "VALUES (?, ?, ?, ?)",
+                (
+                    investigation.id,
+                    investigation.incident_id,
+                    investigation.started_at.isoformat(),
+                    investigation.model_dump_json(),
+                ),
+            )
+
+    def latest_investigation(self, incident_id: str) -> Investigation | None:
+        with self._lock:
+            row = self._db.execute(
+                "SELECT body FROM investigations WHERE incident_id = ? "
+                "ORDER BY started_at DESC, id DESC LIMIT 1",
+                (incident_id,),
+            ).fetchone()
+        return Investigation.model_validate_json(row[0]) if row else None
+
+    def count_investigations(self, incident_id: str) -> int:
+        with self._lock:
+            (count,) = self._db.execute(
+                "SELECT COUNT(*) FROM investigations WHERE incident_id = ?", (incident_id,)
+            ).fetchone()
+        return count
+
+    def latest_investigations(self) -> dict[str, Investigation]:
+        """The latest run per incident, for list views."""
+        with self._lock:
+            rows = self._db.execute(
+                "SELECT body FROM investigations ORDER BY incident_id, started_at, id"
+            ).fetchall()
+        latest: dict[str, Investigation] = {}
+        for (body,) in rows:  # later rows overwrite earlier ones: the last is the latest
+            investigation = Investigation.model_validate_json(body)
+            latest[investigation.incident_id] = investigation
+        return latest
 
     def close(self) -> None:
         with self._lock:

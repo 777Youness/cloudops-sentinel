@@ -29,7 +29,8 @@ def test_system_before_any_sync(client):
     body = client.get("/api/v1/system").json()
     assert body["mode"] == "local"
     assert body["last_sync"] is None
-    assert body["llm"]["configured"] is False
+    # Day 3: the mock provider is the default, so investigations work out of the box.
+    assert body["llm"] == {"provider": "mock", "model": "mock-rules-v1", "configured": True}
 
 
 def test_incidents_empty_before_sync(client):
