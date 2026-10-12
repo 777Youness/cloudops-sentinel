@@ -1,0 +1,28 @@
+# The application returns 5xx for about 8% of requests; latency stays normal.
+# Offsets are minutes relative to "now" (0).
+id: error_spike
+title: 5xx error spike
+resource:
+  id: sim-error-spike
+  name: sim-api-02
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 17
+signals:
+  cpu_utilization: { baseline: 30, noise: 3 }
+  cpu_credit_balance: { baseline: 80, noise: 1 }
+  memory_used: { baseline: 45, noise: 2 }
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 120, noise: 10 }
+  error_rate_5xx:
+    baseline: 0.3
+    noise: 0.2
+    segments:
+      - { from_min: -12, to_min: 0, value: 9 }    # >= 5%: full tier, severity high
+  latency_p95: { baseline: 180, noise: 15 }
+expected:
+  incident: true
+  rules: [R-5XX]
+  severity: high

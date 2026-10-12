@@ -1,0 +1,28 @@
+# Memory climbs and stays above 90%. Offsets are minutes relative to "now" (0).
+id: memory_pressure
+title: Memory pressure
+resource:
+  id: sim-memory-pressure
+  name: sim-cache-01
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 13
+signals:
+  cpu_utilization: { baseline: 30, noise: 3 }
+  cpu_credit_balance: { baseline: 80, noise: 1 }
+  memory_used:
+    baseline: 55
+    noise: 2
+    segments:
+      - { from_min: -40, to_min: -26, value: 80 }  # growing
+      - { from_min: -25, to_min: 0, value: 94 }    # above 90% for 26 minutes
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 120, noise: 10 }
+  error_rate_5xx: { baseline: 0.3, noise: 0.2 }
+  latency_p95: { baseline: 180, noise: 15 }
+expected:
+  incident: true
+  rules: [R-MEM]
+  severity: medium

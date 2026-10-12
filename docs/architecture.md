@@ -58,17 +58,20 @@ POST /api/v1/sync
 
 ## Incident lifecycle
 
-- Day 1: a triggered rule on a resource without an open incident opens one; a resource
-  that already has an open incident is left unchanged (no duplicates).
-- Day 2: one open incident per resource; new breaches merge into it; severity is the peak
+- Day 1 / 2a: the rules that trigger on a resource without an open incident open one
+  incident (one per resource, all its triggered rules); a resource that already has an
+  open incident is left unchanged (no duplicates).
+- Day 2 (2b): one open incident per resource; new breaches merge into it; severity is the peak
   while open; resolution after ≥ 10 minutes of clean data; a later breach opens a new one.
 
 ## Milestones
 
 | Day | Milestone | Status |
 |---|---|---|
-| 1 | Thin slice: scenario → R-CPU-SAT → memory store → API → generated types → Incidents page | Built, pending your verification |
-| 2 | All scenarios and rules, full lifecycle, SQLite, Overview, Investigation workspace (no AI) | Not started |
+| 1 | Thin slice: scenario → R-CPU-SAT → memory store → API → generated types → Incidents page | Built; automated checks pass; manual break exercises deferred |
+| 2a | All V1 rules, `within_normal` / `data_gap` facts, one scenario per rule | Built; automated checks pass |
+| 2b | Full lifecycle (merge, peak severity, resolution), SQLite, deployment events | Not started |
+| 2c | `GET /incidents/{id}`, `GET /overview`, Overview page, Investigation workspace (no AI) | Not started |
 | 3 | Investigation engine: evidence bundle, provider interface, mock + one real provider, validation | Not started |
 | 4 | Terraform: bootstrap + dev env, workload, CloudWatch agent, SSM scripts | Not started |
 | 5 | AWS mode: Boto3 collectors, Resources pages | Not started |

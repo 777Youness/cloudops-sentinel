@@ -7,7 +7,7 @@ Conventions: all timestamps are timezone-aware UTC, serialized ISO 8601 with `Z`
 numeric value that has a unit carries a `unit` field. Missing data stays missing; it is
 never represented as 0.
 
-## Implemented on Day 1
+## Implemented (Day 1, milestone 2a)
 
 **Observations** (`observations.py`)
 - `Resource`: id, kind (`ec2_instance`), name, region, state, instance_type, credit_mode,
@@ -17,7 +17,9 @@ never represented as 0.
 - `ObservationSnapshot`: collected_at, window, data_origin, resources, series.
 
 **Incidents** (`incidents.py`)
-- `Fact`: id (`F1`…, unique within its incident), kind, statement (template-generated),
+- `Fact`: id (`F1`…, unique within its incident), kind (`threshold_breach`,
+  `baseline_deviation`, `within_normal`, `data_gap` are produced since milestone 2a; `event`,
+  `alarm_state`, `log_pattern` are reserved), statement (template-generated),
   source, resource_id, observed_at, window, rule_id, signal, value, baseline, threshold, unit.
 - `TimelineEntry`: at, kind, label, fact_id.
 - `Incident`: id (`INC-0001`), fingerprint (resource id), title, severity (rule-based),
@@ -33,7 +35,7 @@ never represented as 0.
 
 ## Planned (not implemented)
 
-- Day 2: `OpsEvent`, `LogSample`, `within_normal` and `data_gap` facts, `Overview`,
-  `ResourceSummary`, incident detail.
+- Day 2 (2b, 2c): `OpsEvent` (deployment events), incident lifecycle fields, `Overview`,
+  incident detail. `LogSample` and `ResourceSummary` follow with AWS mode.
 - Day 3: `Investigation`, `Hypothesis` (must cite ≥ 1 existing fact ID), `NextCheck`,
   `RemediationOption` (`requires_human` always true), investigation metadata.

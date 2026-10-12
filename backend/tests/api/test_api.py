@@ -1,13 +1,19 @@
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
+from sentinel.collectors.simulated import load_scenarios
 from sentinel.config import Settings
 from sentinel.main import create_app
+
+# A single CPU-saturation scenario keeps these API tests independent of the scenario set.
+ONE_SCENARIO_DIR = Path(__file__).resolve().parent.parent / "fixtures" / "scenarios"
 
 
 @pytest.fixture
 def client(clock):
-    return TestClient(create_app(Settings(mode="local"), clock))
+    return TestClient(create_app(Settings(mode="local", scenarios_dir=ONE_SCENARIO_DIR), clock))
 
 
 def test_health(client):
@@ -81,3 +87,14 @@ def test_failing_collector_is_reported_not_raised(client):
 def test_aws_mode_fails_honestly():
     with pytest.raises(RuntimeError, match="not implemented"):
         create_app(Settings(mode="aws"))
+
+
+def test_full_scenario_set_opens_one_incident_per_incident_scenario(clock):
+    settings = Settings(mode="local")
+    client = TestClient(create_app(settings, clock))
+    expected = [s for s in load_scenarios(settings.scenarios_dir) if s.expected.incident]
+    run = client.post("/api/v1/sync").json()
+    assert run["incidents_opened"] == len(expected)
+    items = client.get("/api/v1/incidents").json()["items"]
+    # sorted by severity: the critical status-check incident comes first
+    assert items[0]["severity"] == "critical"

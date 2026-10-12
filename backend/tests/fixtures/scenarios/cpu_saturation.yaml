@@ -1,0 +1,30 @@
+# Sustained CPU saturation on an otherwise normal instance.
+# Offsets are minutes relative to the latest complete period ("now" = 0).
+# memory_used is intentionally absent, as on an instance without the CloudWatch agent:
+# the incident must show a data_gap fact for R-MEM, never a 0% memory reading.
+id: cpu_saturation
+title: Sustained CPU saturation
+resource:
+  id: sim-cpu-saturation
+  name: sim-api-01
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 7
+signals:
+  cpu_utilization:
+    baseline: 40        # normal load
+    noise: 3            # +/- uniform noise, deterministic via seed
+    segments:
+      - { from_min: -20, to_min: 0, value: 97 }   # last 21 datapoints saturated
+  cpu_credit_balance: { baseline: 80, noise: 1 }
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 120, noise: 10 }
+  error_rate_5xx: { baseline: 0.3, noise: 0.2 }
+  latency_p95: { baseline: 180, noise: 15 }
+expected:
+  incident: true
+  rules: [R-CPU-SAT]
+  severity: medium
+  reasons: { R-MEM: insufficient_data }

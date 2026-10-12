@@ -25,6 +25,9 @@ def test_scenario_expected_outcome(scenario, clock):
         [incident] = result.opened
         assert incident.rule_ids == scenario.expected.rules
         assert incident.severity == scenario.expected.severity
+    reasons = {r.rule_id: r.reason for r in result.rule_results}
+    for rule_id, reason in scenario.expected.reasons.items():
+        assert reasons[rule_id] == reason, rule_id
 
 
 def test_at_least_one_scenario_exists():

@@ -1,0 +1,33 @@
+# Latency jumps to ~8x its baseline while 5xx rises to 3-4%. On their own these rules
+# are medium (R-LAT, and R-5XX in its 2-5% tier); together C-USER-IMPACT raises the
+# incident to high. Offsets are minutes relative to "now" (0).
+id: user_impact
+title: Slow responses and errors together
+resource:
+  id: sim-user-impact
+  name: sim-web-01
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 19
+signals:
+  cpu_utilization: { baseline: 45, noise: 4 }
+  cpu_credit_balance: { baseline: 70, noise: 1 }
+  memory_used: { baseline: 50, noise: 2 }
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 120, noise: 10 }
+  error_rate_5xx:
+    baseline: 0.3
+    noise: 0.2
+    segments:
+      - { from_min: -15, to_min: 0, value: 3.5 }  # 2-5%: lower tier
+  latency_p95:
+    baseline: 180
+    noise: 15
+    segments:
+      - { from_min: -15, to_min: 0, value: 1400 } # threshold = max(500, 3 x ~180)
+expected:
+  incident: true
+  rules: [R-5XX, R-LAT, C-USER-IMPACT]
+  severity: high
