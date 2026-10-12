@@ -85,6 +85,14 @@ export function EvidencePanel({ incident }: { incident: Incident }) {
           </section>
         );
       })}
+    </div>
+  );
+}
+
+/** Incident metadata. Shown after the investigation, at the end of the panel. */
+export function IncidentDetails({ incident }: { incident: Incident }) {
+  return (
+    <div className={styles.panel}>
       <h2 className={styles.h2}>Details</h2>
       <dl className={styles.details}>
         <div>
@@ -98,10 +106,6 @@ export function EvidencePanel({ incident }: { incident: Incident }) {
         <div>
           <dt>Last updated</dt>
           <dd className="mono">{formatUtcFull(incident.last_updated_at)}</dd>
-        </div>
-        <div>
-          <dt>Investigation</dt>
-          <dd>Not run</dd>
         </div>
       </dl>
     </div>

@@ -110,10 +110,10 @@ export function SystemPage() {
               <span className="mono">{system.data.region}</span>
             </Row>
             <Row label="Investigation provider">
-              {system.data.llm.configured ? (
-                system.data.llm.provider
-              ) : (
-                <span className={styles.muted}>Not configured</span>
+              <span className="mono">{system.data.llm.provider ?? 'none'}</span>
+              {system.data.llm.model && <span className="mono"> {system.data.llm.model}</span>}
+              {!system.data.llm.configured && (
+                <span className={styles.muted}> (not configured)</span>
               )}
             </Row>
             <Row label="Version">

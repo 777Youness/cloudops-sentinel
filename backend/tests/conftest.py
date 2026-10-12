@@ -1,3 +1,9 @@
+import os
+
+# Before any sentinel import: the module-level app in sentinel.main must never open (and
+# migrate) the developer's database. Environment variables override .env and defaults.
+os.environ["SENTINEL_DB_PATH"] = ":memory:"
+
 from datetime import UTC, datetime, timedelta
 
 import pytest

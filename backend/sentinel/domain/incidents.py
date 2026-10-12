@@ -11,7 +11,8 @@ from sentinel.domain.observations import DataOrigin, MetricSeries, SignalName, U
 
 Severity = Literal["low", "medium", "high", "critical"]
 IncidentStatus = Literal["open", "resolved"]
-InvestigationStatus = Literal["not_run", "completed", "failed", "unavailable"]
+# "outdated": completed, but the incident has changed since (evidence hash differs).
+InvestigationStatus = Literal["not_run", "completed", "failed", "outdated", "unavailable"]
 FactKind = Literal[
     "threshold_breach",
     "baseline_deviation",
@@ -111,7 +112,9 @@ class IncidentSummary(BaseModel):
     investigation_status: InvestigationStatus
 
     @classmethod
-    def from_incident(cls, incident: Incident) -> "IncidentSummary":
+    def from_incident(
+        cls, incident: Incident, investigation_status: InvestigationStatus = "not_run"
+    ) -> "IncidentSummary":
         return cls(
             id=incident.id,
             title=incident.title,
@@ -123,7 +126,7 @@ class IncidentSummary(BaseModel):
             first_detected_at=incident.first_detected_at,
             resolved_at=incident.resolved_at,
             key_signals=incident.key_signals,
-            investigation_status="not_run",  # investigations arrive on Day 3
+            investigation_status=investigation_status,
         )
 
 

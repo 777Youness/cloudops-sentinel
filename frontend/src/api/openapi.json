@@ -300,6 +300,43 @@
         "title": "Health",
         "type": "object"
       },
+      "Hypothesis": {
+        "additionalProperties": false,
+        "properties": {
+          "cites": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cites",
+            "type": "array"
+          },
+          "confidence": {
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "statement": {
+            "title": "Statement",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "statement",
+          "confidence",
+          "cites"
+        ],
+        "title": "Hypothesis",
+        "type": "object"
+      },
       "Incident": {
         "properties": {
           "data_origin": {
@@ -494,6 +531,7 @@
               "not_run",
               "completed",
               "failed",
+              "outdated",
               "unavailable"
             ],
             "title": "Investigation Status",
@@ -562,6 +600,202 @@
           "investigation_status"
         ],
         "title": "IncidentSummary",
+        "type": "object"
+      },
+      "Investigation": {
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationError"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence_hash": {
+            "title": "Evidence Hash",
+            "type": "string"
+          },
+          "fact_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fact Ids",
+            "type": "array"
+          },
+          "findings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvestigationFindings"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finished_at": {
+            "format": "date-time",
+            "title": "Finished At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "completed",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "incident_id",
+          "status",
+          "provider",
+          "model",
+          "prompt_version",
+          "started_at",
+          "finished_at",
+          "attempts",
+          "evidence_hash",
+          "fact_ids"
+        ],
+        "title": "Investigation",
+        "type": "object"
+      },
+      "InvestigationError": {
+        "description": "Why a run failed: a provider error (timeout, auth, ...) or a validation reason.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "InvestigationError",
+        "type": "object"
+      },
+      "InvestigationFindings": {
+        "additionalProperties": false,
+        "properties": {
+          "hypotheses": {
+            "items": {
+              "$ref": "#/components/schemas/Hypothesis"
+            },
+            "title": "Hypotheses",
+            "type": "array"
+          },
+          "limitations": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Limitations",
+            "type": "array"
+          },
+          "next_checks": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/NextCheck"
+            },
+            "title": "Next Checks",
+            "type": "array"
+          },
+          "remediation": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RemediationOption"
+            },
+            "title": "Remediation",
+            "type": "array"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "hypotheses"
+        ],
+        "title": "InvestigationFindings",
+        "type": "object"
+      },
+      "InvestigationResult": {
+        "description": "What the API returns: the latest run plus what can only be known at read time.",
+        "properties": {
+          "incident_evidence_hash": {
+            "title": "Incident Evidence Hash",
+            "type": "string"
+          },
+          "investigation": {
+            "$ref": "#/components/schemas/Investigation"
+          },
+          "outdated": {
+            "title": "Outdated",
+            "type": "boolean"
+          },
+          "runs": {
+            "title": "Runs",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "investigation",
+          "outdated",
+          "incident_evidence_hash",
+          "runs"
+        ],
+        "title": "InvestigationResult",
         "type": "object"
       },
       "KeySignal": {
@@ -728,6 +962,33 @@
         "title": "MetricSeries",
         "type": "object"
       },
+      "NextCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "cites": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cites",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "cites"
+        ],
+        "title": "NextCheck",
+        "type": "object"
+      },
       "Overview": {
         "properties": {
           "data_as_of": {
@@ -808,6 +1069,40 @@
           "resources"
         ],
         "title": "Overview",
+        "type": "object"
+      },
+      "RemediationOption": {
+        "additionalProperties": false,
+        "description": "Advice for a human. Descriptive text only: there is no command or action field.",
+        "properties": {
+          "cites": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Cites",
+            "type": "array"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "requires_human": {
+            "const": true,
+            "title": "Requires Human",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "requires_human",
+          "cites"
+        ],
+        "title": "RemediationOption",
         "type": "object"
       },
       "ResourceHealth": {
@@ -1330,6 +1625,130 @@
           }
         },
         "summary": "Get Incident",
+        "tags": [
+          "incidents"
+        ]
+      }
+    },
+    "/api/v1/incidents/{incident_id}/investigation": {
+      "get": {
+        "description": "The latest saved run, with `outdated` computed now. Never calls a provider.\n404 if the incident is unknown or has never been investigated.",
+        "operationId": "latest_investigation_api_v1_incidents__incident_id__investigation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Latest Investigation",
+        "tags": [
+          "incidents"
+        ]
+      },
+      "post": {
+        "description": "The only endpoint that calls an LLM provider. Returns 200 with status \"failed\" when\nthe provider or the validator rejected the run: the status describes the outcome.\n404 unknown incident, 409 already running, 503 provider not configured.",
+        "operationId": "run_investigation_api_v1_incidents__incident_id__investigation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "incident_id",
+            "required": true,
+            "schema": {
+              "title": "Incident Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvestigationResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Run Investigation",
         "tags": [
           "incidents"
         ]

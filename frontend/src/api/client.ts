@@ -10,6 +10,7 @@ import type {
   Incident,
   IncidentList,
   IncidentStatusFilter,
+  InvestigationResult,
   Overview,
   SyncRun,
   SystemStatus,
@@ -82,4 +83,9 @@ export const api = {
     request<IncidentList>('GET', `/incidents?status=${encodeURIComponent(status)}`),
   incident: (id: string) => request<Incident>('GET', `/incidents/${encodeURIComponent(id)}`),
   overview: () => request<Overview>('GET', '/overview'),
+  // GET never calls a provider; POST is the only call that does (and may take a while).
+  investigation: (id: string) =>
+    request<InvestigationResult>('GET', `/incidents/${encodeURIComponent(id)}/investigation`),
+  runInvestigation: (id: string) =>
+    request<InvestigationResult>('POST', `/incidents/${encodeURIComponent(id)}/investigation`),
 };

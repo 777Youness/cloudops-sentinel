@@ -43,8 +43,18 @@ never represented as 0.
 **Errors** (`errors.py`)
 - `SentinelError` subclasses with stable codes; `ErrorResponse` envelope.
 
+**Investigation** (`investigation.py`, Day 3)
+- LLM output, strict (`extra="forbid"`): `InvestigationFindings` = summary, `Hypothesis`
+  (id `H1`…, statement, confidence low/medium/high, `cites` ≥ 1 existing fact id),
+  `NextCheck` (id `C1`…, description, `cites`), `RemediationOption` (id `R1`…, description,
+  `requires_human: true`, `cites`; **no command field**), limitations. At most 5 per list,
+  300 characters per text.
+- Saved run: `Investigation` = id `INV-0001`, incident_id, status completed/failed,
+  provider, model, prompt_version, started/finished, attempts (1 or 2), the incident's
+  `evidence_hash` at run time, the fact ids given, findings or error. Stored in its own
+  table; the incident is never modified.
+- `InvestigationResult` (API): the latest run + `outdated` + current incident hash + `runs`.
+
 ## Planned (not implemented)
 
 - Day 5: `LogSample` and `ResourceSummary` with AWS mode.
-- Day 3: `Investigation`, `Hypothesis` (must cite ≥ 1 existing fact ID), `NextCheck`,
-  `RemediationOption` (`requires_human` always true), investigation metadata.

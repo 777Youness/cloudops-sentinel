@@ -21,7 +21,8 @@ import {
   timeDomain,
   timeTicks,
 } from './chartData';
-import { EvidencePanel } from './EvidencePanel';
+import { EvidencePanel, IncidentDetails } from './EvidencePanel';
+import { InvestigationPanel } from './InvestigationPanel';
 import { SignalChart } from './SignalChart';
 import { Timeline } from './Timeline';
 import styles from './WorkspacePage.module.css';
@@ -207,6 +208,8 @@ export function WorkspacePage() {
         </div>
         <aside className={styles.aside} aria-label="Evidence">
           <EvidencePanel incident={data} />
+          <InvestigationPanel incident={data} />
+          <IncidentDetails incident={data} />
         </aside>
       </div>
     </article>

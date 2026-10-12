@@ -1,0 +1,170 @@
+/* Encoding: docs/design-system.md, "Investigation panel". Dashed = inferred. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-2);
+  border-bottom: var(--rule-strong);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-semibold);
+}
+.inferredTag {
+  padding: 0 var(--sp-1);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-1);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+}
+.provider {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-regular);
+  color: var(--text-3);
+}
+.mock {
+  padding: var(--sp-1) var(--sp-2);
+  border-left: 2px solid var(--border-strong);
+  background: var(--surface);
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.summary {
+  color: var(--text-1);
+}
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.h4 {
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+/* Inferred: dashed left rule, where observed facts have a solid one. */
+.inferred {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  column-gap: var(--sp-2);
+  padding: var(--sp-1) var(--sp-2);
+  border-left: 2px dashed var(--border-strong);
+}
+.id {
+  font-size: var(--fs-12);
+  color: var(--text-3);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: 2px;
+  font-size: var(--fs-11);
+  color: var(--text-3);
+}
+.cites {
+  display: inline-flex;
+  gap: var(--sp-2);
+}
+.human {
+  display: inline-block;
+  margin-right: var(--sp-1);
+  padding: 0 var(--sp-1);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-1);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+}
+.limitations {
+  padding-left: var(--sp-4);
+  list-style: disc;
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding-top: var(--sp-2);
+  border-top: var(--rule);
+  font-size: var(--fs-12);
+}
+.details > div {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: var(--sp-2);
+}
+.details dt {
+  color: var(--text-3);
+}
+.details dd {
+  overflow-wrap: anywhere;
+  color: var(--text-1);
+}
+.state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.failed {
+  padding-left: var(--sp-2);
+  border-left: 2px solid var(--crit);
+}
+.stateTitle {
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+}
+.stateDetail {
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
+.code {
+  font-size: var(--fs-11);
+  color: var(--text-3);
+}
+.state :global(button),
+.actions {
+  align-self: flex-start;
+  margin-top: var(--sp-2);
+}
+.outdated {
+  padding: var(--sp-1) var(--sp-2);
+  border-left: 2px solid var(--warn);
+  background: var(--surface);
+  font-size: var(--fs-12);
+  color: var(--text-1);
+}
+.error {
+  font-size: var(--fs-12);
+  color: var(--crit);
+}
+.skeleton {
+  height: 12px;
+  margin-bottom: var(--sp-2);
+  border-radius: var(--radius-1);
+  background: var(--raised);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

@@ -24,6 +24,14 @@ class SyncInProgressError(SentinelError):
     code = "SYNC_IN_PROGRESS"
 
 
+class InvestigationInProgressError(SentinelError):
+    code = "INVESTIGATION_IN_PROGRESS"
+
+
+class LlmNotConfiguredError(SentinelError):
+    code = "LLM_NOT_CONFIGURED"
+
+
 class ErrorBody(BaseModel):
     code: str
     message: str

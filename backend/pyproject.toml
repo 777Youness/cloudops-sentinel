@@ -9,10 +9,11 @@ dependencies = [
     "pydantic",
     "pydantic-settings",
     "pyyaml",
+    "httpx",  # one HTTP call to the LLM provider (investigation/providers only), from Day 3
 ]
 
 [dependency-groups]
-dev = ["pytest", "ruff", "httpx"]
+dev = ["pytest", "ruff"]  # httpx (needed by FastAPI's TestClient) is a runtime dependency
 
 [build-system]
 requires = ["hatchling"]

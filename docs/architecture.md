@@ -1,7 +1,7 @@
 # Architecture
 
 CloudOps Sentinel reads operational telemetry, detects incidents with deterministic rules,
-and (from Day 3) asks an LLM to write an evidence-based investigation. Humans remediate.
+and asks an LLM (on demand) to write an evidence-based investigation. Humans remediate.
 
 ## Principle
 
@@ -19,14 +19,14 @@ Sentinel itself is intentionally deferred until the core product is validated (s
 |---|---|---|---|
 | Observations | `collectors/` | Resources, metric series (later: events, log samples) | Normalized data, no judgement |
 | Facts + incidents | `detection/` | Breaches, facts, incident with rule-based severity | Deterministic judgement |
-| Investigation (Day 3) | `investigation/` | Hypotheses citing facts, checks, remediation options | Validated interpretation |
+| Investigation | `investigation/` | Hypotheses citing facts, checks, remediation options | Validated interpretation, saved separately from the incident |
 
 ## Backend packages and dependency rules
 
 ```
 collectors ──► domain ◄── detection
                  ▲
-investigation ───┘            (Day 3)
+investigation ───┘
 services  → collectors, detection, investigation, store
             (sync.py writes; incidents.py and system.py read)
 api       → services only (routes never touch the store; tested)
@@ -35,13 +35,15 @@ api       → services only (routes never touch the store; tested)
 - `domain/`: pydantic + stdlib only.
 - `detection/`: `domain/` + stdlib only. No I/O, no clock (time is passed in).
 - boto3 only in `collectors/aws/` (Day 5); sqlite3 only in `store/` (ADR 0013);
-  LLM HTTP calls only in `investigation/providers/` (Day 3); FastAPI only in `api/`.
+  LLM HTTP calls only in `investigation/providers/`; FastAPI only in `api/`.
+- `investigation/` (except `providers/`): `domain/` + stdlib only.
 - Enforced by `backend/tests/test_architecture.py`.
 
 ## Runtime rules
 
 - Only `POST /api/v1/sync` collects telemetry (and, from Day 5, calls AWS).
-- Only `POST /api/v1/incidents/{id}/investigation` will call an LLM (Day 3).
+- Only `POST /api/v1/incidents/{id}/investigation` calls an LLM provider (tested: sync and
+  every GET make zero provider calls).
 - All GET endpoints read stored data. The UI always shows when data was last synced.
 - HTTP status describes the API call; `SyncRun.status` describes the outcome.
 
@@ -61,6 +63,21 @@ POST /api/v1/sync
 
 Storage: SQLite, one file per mode (`backend/data/sentinel-<mode>.db`), models stored as
 JSON documents (ADR 0013).
+
+## Investigation flow (Day 3)
+
+```
+POST /api/v1/incidents/{id}/investigation
+  1. read the stored incident (404 if unknown); 503 LLM_NOT_CONFIGURED if the selected
+     provider is incomplete; 409 if this incident is already being investigated
+  2. investigation.bundle   incident -> evidence bundle (facts, timeline, identity)
+  3. investigation.prompt   bundle -> prompt (evidence between markers, declared as data)
+  4. provider.complete      prompt -> reply text          (mock by default, ADR 0015)
+  5. investigation.validator reply -> findings, or a rejection reason
+       rejected once -> retry with the reason; rejected twice -> status "failed"
+  6. store: save the Investigation (own table, schema v2); the incident is never written
+GET /api/v1/incidents/{id}/investigation -> latest run, outdated = hash differs
+```
 
 ## Incident lifecycle
 
@@ -91,7 +108,7 @@ restarts the phases.
 | 2a | All V1 rules, `within_normal` / `data_gap` facts, one scenario per rule | Built; automated checks pass |
 | 2b | Full lifecycle (merge, peak severity, resolution), SQLite, deployment events | Built; automated checks pass |
 | 2c | `GET /incidents/{id}`, `GET /overview`, Overview page, Investigation workspace (no AI) | Built; automated checks pass; reviewed in a browser (simulated mode) |
-| 3 | Investigation engine: evidence bundle, provider interface, mock + one real provider, validation | Not started |
+| 3 | Investigation engine: evidence bundle, provider interface, mock + one real provider, validation | Built; automated checks pass; reviewed in a browser with the mock (no real-provider run recorded yet) |
 | 4 | Terraform: bootstrap + dev env, workload, CloudWatch agent, SSM scripts | Not started |
 | 5 | AWS mode: Boto3 collectors, Resources pages | Not started |
 | 6 | Docker Compose, CI hardening, all UI states | Not started |

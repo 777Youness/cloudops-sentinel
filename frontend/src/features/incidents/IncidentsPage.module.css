@@ -121,3 +121,7 @@
 .colInvestigation {
   width: 112px;
 }
+/* An outdated investigation is a state the reader should notice. */
+.outdated {
+  color: var(--warn);
+}

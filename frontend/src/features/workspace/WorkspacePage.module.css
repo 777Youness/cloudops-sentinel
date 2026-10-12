@@ -67,6 +67,9 @@
   min-width: 0;
 }
 .aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
   position: sticky;
   top: var(--sp-6);
   max-height: calc(100vh - var(--sp-12));
