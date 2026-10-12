@@ -157,3 +157,31 @@ def test_the_api_key_never_appears_in_an_error():
 def test_settings_never_print_the_key():
     settings = Settings(llm_api_key=SECRET)
     assert SECRET not in repr(settings) and SECRET not in str(settings.model_dump())
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "http://llm.test/v1?key=SECRET-IN-URL",  # some providers take the key as a query param
+        "http://user:SECRET-IN-URL@llm.test/v1",  # credentials in the userinfo part
+    ],
+)
+def test_credentials_in_the_base_url_never_appear_in_an_error(base_url):
+    def handler(request):
+        raise httpx.ConnectError("refused", request=request)
+
+    with pytest.raises(ProviderError) as info:
+        _provider(handler, base_url=base_url).complete("PROMPT")
+    error = info.value
+    assert "SECRET-IN-URL" not in f"{error} {error.message} {error.hint}"
+    assert "llm.test" in error.message  # still says where it tried
+
+
+def test_url_credentials_echoed_by_the_provider_are_redacted():
+    def handler(request):
+        return httpx.Response(400, text=f"bad request for {request.url}")
+
+    for base_url in ("http://llm.test/v1?key=SECRET-IN-URL", "http://u:SECRET-IN-URL@llm.test/v1"):
+        with pytest.raises(ProviderError) as info:
+            _provider(handler, base_url=base_url).complete("PROMPT")
+        assert "SECRET-IN-URL" not in info.value.message, base_url

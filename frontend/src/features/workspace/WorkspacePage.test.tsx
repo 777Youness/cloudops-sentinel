@@ -422,6 +422,39 @@ describe('InvestigationPanel', () => {
     expect(within(section).queryByRole('button')).toBeNull();
   });
 
+  it('renders model text as plain text and keeps citations on the page', async () => {
+    // The server validates citations; this checks the UI is safe even if it did not.
+    const hostile: InvestigationResult = {
+      ...COMPLETED,
+      investigation: {
+        ...COMPLETED.investigation,
+        findings: {
+          ...COMPLETED.investigation.findings!,
+          summary: '<img src=x onerror="alert(1)"><a href="https://evil.test">click</a>',
+          hypotheses: [
+            {
+              id: 'H1',
+              statement: '<script>alert(1)</script>',
+              confidence: 'low',
+              cites: ['javascript:alert(1)'],
+            },
+          ],
+        },
+      },
+    };
+    mockFetch(() => json(INCIDENT), { investigation: () => json(hostile) });
+    renderAt('/incidents/INC-0004');
+    const section = await investigationSection();
+    expect(await within(section).findByText(/<img src=x onerror/)).toBeInTheDocument();
+    expect(within(section).getByText('<script>alert(1)</script>')).toBeInTheDocument();
+    expect(
+      section.querySelector('img, script, a[href^="https:"], a[href^="javascript:"]'),
+    ).toBeNull();
+    for (const link of within(section).getAllByRole('link')) {
+      expect(link.getAttribute('href')).toMatch(/^#fact-/);
+    }
+  });
+
   it('reports a refused request inline', async () => {
     mockFetch(() => json(INCIDENT), {
       investigation: (init) =>

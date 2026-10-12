@@ -29,14 +29,41 @@ class OpenAICompatibleProvider:
     ) -> None:
         self.model = model
         self._url = base_url.rstrip("/") + "/chat/completions"
+        self._where = self._describe(self._url)
         self._api_key = api_key
+        self._secrets = self._secret_values(self._url, api_key)
         self._timeout = timeout_seconds
         self._max_tokens = max_tokens
         self._transport = transport
 
+    @staticmethod
+    def _describe(url: str) -> str:
+        """Scheme, host and port only, for messages. The path, query and userinfo are left
+        out: some providers take the key as a query parameter or in user:password@."""
+        try:
+            parsed = httpx.URL(url)
+        except (httpx.InvalidURL, ValueError, TypeError):
+            return "the configured SENTINEL_LLM_BASE_URL"
+        port = f":{parsed.port}" if parsed.port else ""
+        return f"{parsed.scheme}://{parsed.host}{port}"
+
+    @staticmethod
+    def _secret_values(url: str, api_key: str | None) -> list[str]:
+        """Everything that may be a credential: the key, and the URL's password and query
+        values (a provider's error body can echo the request URL)."""
+        values = [api_key] if api_key else []
+        try:
+            parsed = httpx.URL(url)
+            if parsed.password:
+                values.append(parsed.password)
+            values += [v for _, v in parsed.params.multi_items() if len(v) >= 4]
+        except (httpx.InvalidURL, ValueError, TypeError):
+            pass
+        return sorted(set(values), key=len, reverse=True)  # longest first
+
     def _scrub(self, text: str) -> str:
-        if self._api_key:
-            text = text.replace(self._api_key, "[redacted]")
+        for secret in self._secrets:
+            text = text.replace(secret, "[redacted]")
         return text[:200]
 
     def complete(self, prompt: str) -> str:
@@ -65,7 +92,7 @@ class OpenAICompatibleProvider:
         except httpx.HTTPError as exc:
             raise ProviderError(
                 "unreachable",
-                f"Could not reach the provider at {self._url}.",
+                f"Could not reach the provider at {self._where}.",
                 hint="Check SENTINEL_LLM_BASE_URL. For Ollama: is `ollama serve` running?",
             ) from exc
 

@@ -163,3 +163,28 @@ def test_plain_words_mentioning_aws_are_fine():
         }
     ]
     assert validate_output(_reply(remediation=remediation), FACTS).remediation
+
+
+# --- found in the pre-PR audit ---------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"summary": ""},
+        {"hypotheses": [{"id": "H1", "statement": "   ", "confidence": "low", "cites": ["F1"]}]},
+        {"hypotheses": [{"id": "", "statement": "x", "confidence": "low", "cites": ["F1"]}]},
+        {"limitations": [""]},
+    ],
+)
+def test_empty_text_or_id_is_rejected(overrides):
+    assert _reason(_reply(**overrides)) == "schema_invalid"
+
+
+def test_model_text_echoed_in_a_rejection_is_bounded():
+    # The detail goes into the saved error, the API response and the retry prompt.
+    hypotheses = [{"id": "H1", "statement": "x", "confidence": "low", "cites": ["F" + "9" * 5000]}]
+    with pytest.raises(ValidationFailure) as info:
+        validate_output(_reply(hypotheses=hypotheses), FACTS)
+    assert info.value.reason == "unknown_fact"
+    assert len(info.value.detail) <= 300

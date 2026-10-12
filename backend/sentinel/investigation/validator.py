@@ -54,9 +54,18 @@ COMMAND_PATTERNS = [
 
 class ValidationFailure(Exception):
     def __init__(self, reason: str, detail: str) -> None:
+        # The detail can quote the model's own text. It is saved, returned by the API and
+        # sent back on the retry, so it is bounded like every other text.
+        detail = detail if len(detail) <= MAX_TEXT else detail[: MAX_TEXT - 1] + "…"
         super().__init__(f"{reason}: {detail}")
         self.reason = reason
         self.detail = detail
+
+
+def _quote_ids(ids: list[str]) -> str:
+    """Model-supplied ids, shortened, for an error message."""
+    shown = [i if len(i) <= 20 else i[:19] + "…" for i in ids[:5]]
+    return ", ".join(shown) + (f" and {len(ids) - 5} more" if len(ids) > 5 else "")
 
 
 def _parse_json(text: str) -> Any:
@@ -101,7 +110,7 @@ def validate_output(text: str, fact_ids: set[str]) -> InvestigationFindings:
     forbidden = _forbidden_keys(data)
     if forbidden:
         raise ValidationFailure(
-            "forbidden_field", f"Fields that may not be set: {', '.join(sorted(forbidden))}."
+            "forbidden_field", f"Fields that may not be set: {_quote_ids(sorted(forbidden))}."
         )
     for option in data.get("remediation") or []:
         if isinstance(option, dict) and option.get("requires_human") is not True:
@@ -123,6 +132,13 @@ def validate_output(text: str, fact_ids: set[str]) -> InvestigationFindings:
     if not findings.hypotheses:
         raise ValidationFailure("no_hypotheses", "At least one hypothesis is required.")
 
+    for where, text_value in _texts(findings):
+        if not text_value.strip():
+            raise ValidationFailure("schema_invalid", f"{where} is empty.")
+    for item in [*findings.hypotheses, *findings.next_checks, *findings.remediation]:
+        if not item.id.strip():
+            raise ValidationFailure("schema_invalid", "Every item needs a non-empty id.")
+
     lists = (findings.hypotheses, findings.next_checks, findings.remediation)
     if any(len(items) > MAX_ITEMS for items in lists) or len(findings.limitations) > MAX_ITEMS:
         raise ValidationFailure("schema_invalid", f"At most {MAX_ITEMS} items per list.")
@@ -136,14 +152,14 @@ def validate_output(text: str, fact_ids: set[str]) -> InvestigationFindings:
         if unknown:
             raise ValidationFailure(
                 "unknown_fact",
-                f"{item.id} cites {', '.join(unknown)}, which "
+                f"{_quote_ids([item.id])} cites {_quote_ids(unknown)}, which "
                 f"{'is' if len(unknown) == 1 else 'are'} not in the evidence.",
             )
 
     ids = [item.id for item in items]
     duplicates = sorted({i for i in ids if ids.count(i) > 1})
     if duplicates:
-        raise ValidationFailure("duplicate_id", f"Duplicate ids: {', '.join(duplicates)}.")
+        raise ValidationFailure("duplicate_id", f"Duplicate ids: {_quote_ids(duplicates)}.")
 
     for where, text_value in _texts(findings):
         if len(text_value) > MAX_TEXT:
