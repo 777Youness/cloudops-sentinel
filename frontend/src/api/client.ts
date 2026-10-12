@@ -7,8 +7,10 @@
  */
 import type {
   ErrorResponse,
+  Incident,
   IncidentList,
   IncidentStatusFilter,
+  Overview,
   SyncRun,
   SystemStatus,
 } from './types';
@@ -78,4 +80,6 @@ export const api = {
   sync: () => request<SyncRun>('POST', '/sync'),
   incidents: (status: IncidentStatusFilter) =>
     request<IncidentList>('GET', `/incidents?status=${encodeURIComponent(status)}`),
+  incident: (id: string) => request<Incident>('GET', `/incidents/${encodeURIComponent(id)}`),
+  overview: () => request<Overview>('GET', '/overview'),
 };

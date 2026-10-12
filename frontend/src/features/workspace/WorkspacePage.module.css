@@ -1,0 +1,148 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.back {
+  font-size: var(--fs-12);
+}
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.h1 {
+  font-size: var(--fs-20);
+  font-weight: var(--fw-semibold);
+  line-height: var(--lh-tight);
+}
+.statusOpen,
+.statusResolved {
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+}
+.statusOpen {
+  color: var(--text-1);
+}
+.statusResolved {
+  color: var(--ok);
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-6);
+}
+.meta > div {
+  display: flex;
+  gap: var(--sp-2);
+}
+.meta dt {
+  color: var(--text-3);
+}
+.meta dd .mono {
+  color: var(--text-2);
+}
+.relative {
+  font-size: var(--fs-12);
+  color: var(--text-3);
+}
+
+/* Evidence column (charts, timeline) + sticky 400 px panel. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: var(--sp-8);
+  align-items: start;
+}
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-8);
+  min-width: 0;
+}
+.aside {
+  position: sticky;
+  top: var(--sp-6);
+  max-height: calc(100vh - var(--sp-12));
+  overflow-y: auto;
+  padding-left: var(--sp-6);
+  border-left: var(--rule);
+}
+.h2 {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-14);
+  font-weight: var(--fw-semibold);
+}
+.charts {
+  border-top: var(--rule-strong);
+}
+.other {
+  margin-top: var(--sp-4);
+}
+.other summary {
+  cursor: pointer;
+  padding: var(--sp-2) 0;
+  color: var(--text-2);
+  font-weight: var(--fw-medium);
+}
+.muted {
+  color: var(--text-3);
+}
+
+/* Skeleton shaped like the page */
+.skeletonTitle,
+.skeletonMeta,
+.skeletonChart,
+.skeletonPanel {
+  border-radius: var(--radius-1);
+  background: var(--raised);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.skeletonTitle {
+  width: 40%;
+  height: 24px;
+  margin-bottom: var(--sp-3);
+}
+.skeletonMeta {
+  width: 70%;
+  height: 12px;
+  margin-bottom: var(--sp-8);
+}
+.skeletonChart {
+  height: 136px;
+  margin-bottom: var(--sp-3);
+}
+.skeletonPanel {
+  height: 320px;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeletonTitle,
+  .skeletonMeta,
+  .skeletonChart,
+  .skeletonPanel {
+    animation: none;
+  }
+}
+
+@media (max-width: 1279px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .aside {
+    position: static;
+    max-height: none;
+    padding-left: 0;
+    border-left: none;
+  }
+}

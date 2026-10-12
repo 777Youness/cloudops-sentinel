@@ -1,0 +1,14 @@
+.notice {
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-2) var(--sp-3);
+  border-left: 2px solid var(--warn);
+  background: var(--surface);
+}
+.title {
+  font-weight: var(--fw-medium);
+  color: var(--text-1);
+}
+.detail {
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}

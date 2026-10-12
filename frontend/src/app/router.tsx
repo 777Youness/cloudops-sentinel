@@ -13,6 +13,13 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/incidents" replace /> },
       { path: 'incidents', element: <IncidentsPage /> },
+      {
+        // Loaded on first visit: the charting library is only needed in the workspace.
+        path: 'incidents/:id',
+        lazy: async () => ({
+          Component: (await import('../features/workspace/WorkspacePage')).WorkspacePage,
+        }),
+      },
       { path: 'system', element: <SystemPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],

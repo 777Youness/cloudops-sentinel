@@ -1,0 +1,36 @@
+.timeline {
+  border-top: var(--rule-strong);
+}
+.entry {
+  display: grid;
+  grid-template-columns: 80px 96px minmax(0, 1fr) auto;
+  gap: var(--sp-3);
+  align-items: baseline;
+  min-height: var(--row-height);
+  padding: var(--sp-2) 0;
+  border-bottom: var(--rule);
+}
+.time {
+  color: var(--text-1);
+}
+.kind {
+  font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
+  color: var(--text-2);
+}
+/* Deployments use the accent, as their markers on the charts do. */
+.deploy .kind {
+  color: var(--accent);
+}
+.label {
+  color: var(--text-1);
+}
+.factLink {
+  margin-left: var(--sp-2);
+  font-size: var(--fs-12);
+}
+.relative {
+  font-size: var(--fs-12);
+  color: var(--text-3);
+  white-space: nowrap;
+}

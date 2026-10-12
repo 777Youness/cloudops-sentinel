@@ -72,6 +72,13 @@
   font-weight: var(--fw-medium);
   color: var(--text-1);
 }
+/* The title is the row's link: one tab stop per incident, in the text color. */
+.titleLink {
+  color: var(--text-1);
+}
+.titleLink:hover {
+  color: var(--accent);
+}
 .resourceName {
   display: block;
 }

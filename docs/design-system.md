@@ -80,11 +80,11 @@ signals sit in a collapsed "Other signals" section.
 | Series | 1.5 px line, `--text-1`; status check as a step line (Passed / Failed ticks) |
 | Missing data | The line **breaks**. Never interpolated, never drawn as 0. The chart header states "N missing datapoints" in `--text-2` |
 | Threshold | 1 px dashed line `--text-2`, labelled "Threshold 90%" (value from the breach fact) |
-| Baseline (R-LAT) | 1 px dotted line `--text-3`, labelled "Baseline 177 ms" |
+| Baseline (R-LAT) | 1 px dotted line `--text-3`; its value is in the chart header (an in-plot label collides with the threshold's) |
 | Breach window | Band in the incident severity's 12% tint, from the breach fact's window |
 | Deployment | 1 px vertical line `--accent`, labelled "Deploy" |
-| Incident opened / resolved | 1 px vertical dotted line `--text-3`, labelled "Opened" / "Resolved" |
-| Y axis | 3 ticks, unit on every tick label, Plex Mono 11 px. Percent is fixed 0–100%; others start at 0 and always include the threshold |
+| Incident opened / resolved | 1 px vertical dotted line `--text-3`, labelled "Opened" / "Resolved"; the time axis extends to include them. Labels near the right edge sit left of their line |
+| Y axis | 3 ticks, unit on every tick label, Plex Mono 11 px. CPU and memory percent are fixed 0–100%; everything else (including the 5xx rate) starts at 0 and always includes the threshold |
 | X axis | UTC `HH:MM`, round 5/10/15/30/60-minute steps |
 | Tooltip | The one overlay: absolute time `HH:MM UTC`, value with unit, or "No data" at a gap |
 

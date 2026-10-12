@@ -1,4 +1,4 @@
-import type { Severity } from '../../api/types';
+import type { Severity } from '../api/types';
 import styles from './SeverityTag.module.css';
 
 const LABELS: Record<Severity, string> = {

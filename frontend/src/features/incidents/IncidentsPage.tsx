@@ -1,8 +1,9 @@
-import { NavLink, useSearchParams } from 'react-router';
+import { Link, NavLink, useSearchParams } from 'react-router';
 
 import type { IncidentStatusFilter, IncidentSummary } from '../../api/types';
 import { Button } from '../../components/Button';
 import { SkeletonRows } from '../../components/SkeletonRows';
+import { RefreshError } from '../../components/RefreshError';
 import { EmptyState, ErrorState } from '../../components/StateMessage';
 import {
   plural,
@@ -17,7 +18,7 @@ import { useSync, useSyncActivity } from '../sync/api';
 import { useSystem } from '../system/api';
 import { useIncidents } from './api';
 import styles from './IncidentsPage.module.css';
-import { SeverityTag } from './SeverityTag';
+import { SeverityTag } from '../../components/SeverityTag';
 
 const FILTERS: { value: IncidentStatusFilter; label: string }[] = [
   { value: 'open', label: 'Open' },
@@ -36,8 +37,16 @@ function IncidentRow({ incident, now }: { incident: IncidentSummary; now: number
       <td>
         <SeverityTag severity={incident.severity} />
       </td>
-      <td className="mono">{incident.id}</td>
-      <td className={styles.title}>{incident.title}</td>
+      <td className="mono">
+        <Link to={`/incidents/${incident.id}`} tabIndex={-1} aria-hidden="true">
+          {incident.id}
+        </Link>
+      </td>
+      <td className={styles.title}>
+        <Link to={`/incidents/${incident.id}`} className={styles.titleLink}>
+          {incident.title}
+        </Link>
+      </td>
       <td>
         <span className={styles.resourceName}>{incident.resource_name}</span>
         <span className={`mono ${styles.resourceId}`}>{incident.resource_id}</span>
@@ -124,7 +133,10 @@ export function IncidentsPage() {
         </nav>
       </header>
 
-      {incidents.isError ? (
+      {incidents.isError && incidents.data && (
+        <RefreshError shownAt={incidents.dataUpdatedAt} onRetry={() => incidents.refetch()} />
+      )}
+      {incidents.isError && !incidents.data ? (
         <ErrorState
           error={incidents.error}
           action={<Button onClick={() => incidents.refetch()}>Retry</Button>}
