@@ -1,0 +1,51 @@
+# Multi-phase: a deployment, then latency degrades (medium); on the next sync errors join
+# in, and the same incident is updated: R-5XX and C-USER-IMPACT are added and severity
+# rises to high. Phases advance one per sync. Offsets are minutes relative to "now" (0).
+id: escalation
+title: Latency, then errors after a deployment
+resource:
+  id: sim-escalation
+  name: sim-shop-01
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 37
+signals:
+  cpu_utilization: { baseline: 40, noise: 4 }
+  cpu_credit_balance: { baseline: 70, noise: 1 }
+  memory_used: { baseline: 50, noise: 2 }
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 120, noise: 10 }
+  error_rate_5xx: { baseline: 0.3, noise: 0.2 }
+  latency_p95:
+    baseline: 180
+    noise: 15
+    segments:
+      - { from_min: -15, to_min: 0, value: 1400 }
+events:
+  - { id: deploy-v1-4-2, at_min: -16, kind: deployment, label: "Deploy v1.4.2 of the shop API" }
+phases:
+  - expected: { incident: true, outcome: opened, rules: [R-LAT], severity: medium }
+  - signals:
+      error_rate_5xx:
+        baseline: 0.3
+        noise: 0.2
+        segments:
+          - { from_min: -8, to_min: 0, value: 8 }
+    expected:
+      incident: true
+      outcome: updated
+      rules: [R-5XX, R-LAT, C-USER-IMPACT]
+      severity: high
+  - signals:
+      error_rate_5xx:
+        baseline: 0.3
+        noise: 0.2
+        segments:
+          - { from_min: -9, to_min: 0, value: 8 }
+    expected:
+      incident: true
+      outcome: unchanged   # same situation observed again: no update
+      rules: [R-5XX, R-LAT, C-USER-IMPACT]
+      severity: high

@@ -71,5 +71,25 @@ goes into it: `rule_ids` in the order above, severity = highest in the matrix, t
 the highest-severity rule (the derived rule wins ties). C-USER-IMPACT has no fact of its
 own; the R-5XX and R-LAT facts are its evidence.
 
-Facts are ordered: breaches (`threshold_breach`, or `baseline_deviation` for R-LAT), then
-`within_normal`, then `data_gap`. IDs are `F1`, `F2`, … in that order.
+When an incident opens, its facts are ordered: breaches (`threshold_breach`, or
+`baseline_deviation` for R-LAT), then `event` (deployments in the evidence window), then
+`within_normal`, then `data_gap`. IDs are `F1`, `F2`, … in that order. Later facts (merged
+rules, new events, resolution) are appended with the next ids.
+
+## Resolution
+
+An open incident resolves when no rule triggers on its resource and **every** signal-based
+rule in its `rule_ids` has been clean for at least 10 minutes:
+
+| Rule | Clean means |
+|---|---|
+| R-CPU-SAT, R-MEM | below 90% |
+| R-CPU-CREDIT | above 5 credits |
+| R-STATUS | below 1 (passing) |
+| R-5XX | below 2% (the lower tier, not 5%) |
+| R-LAT | below the threshold recorded in its fact (max(500 ms, 3 × baseline) at detection) |
+| C-USER-IMPACT | derived: clears when R-5XX and R-LAT do |
+
+Clean runs follow the same rules as breach runs: trailing, a gap breaks them, and missing
+data is never clean. While open, severity never drops; it only rises when a more severe
+rule triggers.

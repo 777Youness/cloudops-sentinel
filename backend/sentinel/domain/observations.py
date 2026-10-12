@@ -10,7 +10,7 @@ from pydantic import AwareDatetime, BaseModel
 
 DataOrigin = Literal["simulated", "aws"]
 
-# V1 signal vocabulary. Day 1 only produces cpu_utilization.
+# V1 signal vocabulary.
 SignalName = Literal[
     "cpu_utilization",
     "cpu_credit_balance",
@@ -59,6 +59,25 @@ class MetricSeries(BaseModel):
     points: list[MetricPoint]
 
 
+EventKind = Literal["deployment"]
+
+
+class OpsEvent(BaseModel):
+    """Something a human or a pipeline did to a resource, e.g. a deployment.
+
+    An event is an observation, not a judgement: code never claims an event caused an
+    incident. `id` is stable across syncs, so the same event is never recorded twice.
+    """
+
+    id: str
+    resource_id: str
+    kind: EventKind
+    at: AwareDatetime
+    label: str
+    source: str
+    data_origin: DataOrigin
+
+
 class ObservationSnapshot(BaseModel):
     collected_at: AwareDatetime
     window_start: AwareDatetime
@@ -66,3 +85,4 @@ class ObservationSnapshot(BaseModel):
     data_origin: DataOrigin
     resources: list[Resource]
     series: list[MetricSeries]
+    events: list[OpsEvent] = []

@@ -3,8 +3,8 @@
 from datetime import datetime, timedelta
 
 from sentinel.detection import thresholds
-from sentinel.detection.rules import RuleResult
-from sentinel.domain.observations import SignalName, Unit
+from sentinel.detection.rules import Clearance, RuleResult
+from sentinel.domain.observations import OpsEvent, SignalName, Unit
 
 SIGNAL_LABELS: dict[SignalName, str] = {
     "cpu_utilization": "CPU utilization",
@@ -130,3 +130,42 @@ def breach_start_label(r: RuleResult, unit: Unit) -> str:
 
 def incident_opened_label(rule_ids: list[str], severity: str) -> str:
     return f"Incident opened by {', '.join(rule_ids)}, severity {severity}"
+
+
+EVENT_KIND_LABELS = {"deployment": "Deployment"}
+
+
+def event_fact(event: OpsEvent) -> str:
+    return f"{EVENT_KIND_LABELS[event.kind]} at {hhmm(event.at)}: {event.label}"
+
+
+def event_label(event: OpsEvent) -> str:
+    return f"{EVENT_KIND_LABELS[event.kind]}: {event.label}"
+
+
+def cleared_fact(c: Clearance, unit: Unit) -> str:
+    assert c.clean_since is not None
+    since = f"for {minutes(c.duration)} min since {hhmm(c.clean_since)}"
+    match c.rule_id:
+        case "R-CPU-CREDIT":
+            return f"CPU credit balance above {limit(c.threshold, unit)} {since}"
+        case "R-STATUS":
+            return f"EC2 status check passing {since}"
+        case _:
+            return f"{SIGNAL_LABELS[c.signal]} below {limit(c.threshold, unit)} {since}"
+
+
+def incident_updated_label(added_rules: list[str], old: str, new: str, events: int) -> str:
+    parts = []
+    if added_rules:
+        parts.append(f"{', '.join(added_rules)} added")
+    if new != old:
+        parts.append(f"severity raised from {old} to {new}")
+    if events:
+        parts.append(f"{events} new event{'s' if events > 1 else ''}")
+    return "Incident updated: " + "; ".join(parts)
+
+
+def incident_resolved_label() -> str:
+    minutes_clean = minutes(thresholds.RESOLVE_CLEAN_DURATION)
+    return f"Incident resolved: every condition clear for at least {minutes_clean} min"

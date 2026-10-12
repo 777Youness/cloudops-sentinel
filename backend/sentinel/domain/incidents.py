@@ -53,6 +53,7 @@ class Fact(BaseModel):
     baseline: float | None = None
     threshold: float | None = None
     unit: Unit | None = None
+    event_id: str | None = None  # kind "event" only: the OpsEvent this fact records
 
 
 class TimelineEntry(BaseModel):

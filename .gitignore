@@ -4,6 +4,10 @@
 *.tfvars
 !*.tfvars.example
 .venv/
+# Local SQLite databases (backend/data/)
+data/
+*.db
+
 # Terraform (Day 4+)
 .terraform/
 *.tfstate

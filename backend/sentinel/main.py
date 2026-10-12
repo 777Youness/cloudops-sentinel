@@ -14,7 +14,7 @@ from sentinel.clock import Clock, SystemClock
 from sentinel.collectors.simulated import SimulatedSource, load_scenarios
 from sentinel.config import VERSION, Settings
 from sentinel.services.sync import SyncService
-from sentinel.store.memory import MemoryStore
+from sentinel.store.sqlite import SqliteStore
 
 API_PREFIX = "/api/v1"
 
@@ -29,7 +29,7 @@ def build_container(settings: Settings, clock: Clock) -> Container:
         region=settings.region,
         latency_seconds=settings.simulated_latency_seconds,
     )
-    store = MemoryStore()
+    store = SqliteStore(settings.resolved_db_path())
     sync = SyncService(source, store, clock, window=timedelta(minutes=settings.sync_window_minutes))
     return Container(settings=settings, clock=clock, store=store, sync=sync)
 

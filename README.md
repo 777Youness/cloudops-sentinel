@@ -6,14 +6,19 @@ Sentinel collects operational telemetry, detects incidents with deterministic ru
 (from Day 3) asks an LLM to write an investigation in which every hypothesis must cite facts
 the code collected. Severity is rule-based. Humans decide on remediation.
 
-> **Status: V1 in progress — milestone 2a (all detection rules).** Only simulated data
-> exists so far. AWS mode, the incident lifecycle, the investigation engine and most
-> screens are not built yet. See [docs/architecture.md](docs/architecture.md) for the milestone plan.
+> **Status: V1 in progress — milestone 2b (incident lifecycle and storage).** Only
+> simulated data exists so far. AWS mode, the investigation engine and most screens are
+> not built yet. See [docs/architecture.md](docs/architecture.md) for the milestone plan.
 
 ## What works today
 
-- Eight simulated scenarios (`backend/scenarios/`) replayed relative to "now": one per
-  rule, a healthy instance, and errors on too little traffic (which must not alert).
+- Ten simulated scenarios (`backend/scenarios/`) replayed relative to "now": one per
+  rule, a healthy instance, errors on too little traffic (which must not alert), and two
+  multi-phase scenarios that advance one step per sync (`escalation`, `recovery`).
+- Incident lifecycle: incidents are updated when new rules or deployments appear, keep
+  their peak severity, resolve after 10 clean minutes, and a later breach opens a new one.
+- SQLite persistence: history survives a restart (`backend/data/sentinel-<mode>.db`;
+  delete the file to start over).
 - All V1 rules (R-CPU-SAT, R-CPU-CREDIT, R-MEM, R-STATUS, R-5XX, R-LAT, C-USER-IMPACT),
   severity from one rule matrix, and facts that also record what was normal and what
   could not be checked. See [docs/detection-rules.md](docs/detection-rules.md).
@@ -37,7 +42,8 @@ npm install
 npm run dev
 ```
 
-Open http://127.0.0.1:5173, click **Sync now**: six incidents appear.
+Open http://127.0.0.1:5173, click **Sync now**: eight incidents appear. Click it again:
+one incident is updated (escalation) and one is resolved (recovery, under **Resolved**).
 API docs: http://127.0.0.1:8000/docs
 
 ## Checks
@@ -60,7 +66,7 @@ CLAUDE.md   rules for AI-assisted development in this repository
 
 See [docs/adr](docs/adr). Key ones: Sentinel runs locally for V1 (0001), a pure detection
 core with enforced import rules (0002), only the sync collects data (0003), rule-based
-severity (0004), generated API types (0010).
+severity (0004), generated API types (0010), SQLite document store (0013).
 
 ## Acknowledgements
 

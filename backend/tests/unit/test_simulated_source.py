@@ -1,6 +1,8 @@
 from datetime import timedelta
 
-from sentinel.collectors.simulated import SimulatedSource, load_scenarios
+import pytest
+
+from sentinel.collectors.simulated import Scenario, SimulatedSource, load_scenarios
 from sentinel.config import Settings
 
 
@@ -34,3 +36,41 @@ def test_window_filters_points(clock):
     now = clock.now()
     snapshot = _source(clock).collect(now - timedelta(minutes=10), now)
     assert all(p.t >= now - timedelta(minutes=10) for p in snapshot.series[0].points)
+
+
+def _phased(clock):
+    [recovery] = [s for s in load_scenarios(Settings().scenarios_dir) if s.id == "recovery"]
+    return SimulatedSource([recovery], clock, region="eu-west-3")
+
+
+def _latest_cpu(snapshot):
+    [cpu] = [s for s in snapshot.series if s.signal == "cpu_utilization"]
+    return cpu.points[-1].v
+
+
+def test_phases_advance_one_per_collection_and_the_last_repeats(clock):
+    source = _phased(clock)
+    now = clock.now()
+    window = (now - timedelta(hours=3), now)
+    latest = [_latest_cpu(source.collect(*window)) for _ in range(4)]
+    assert latest[0] > 90  # phase 1: saturated now
+    assert latest[1] < 90  # phase 2: recovered
+    assert latest[2] > 90  # phase 3: saturated again
+    assert latest[3] == latest[2]  # phase 3 repeats
+
+
+def test_events_have_stable_ids_and_follow_the_window(clock):
+    [escalation] = [s for s in load_scenarios(Settings().scenarios_dir) if s.id == "escalation"]
+    source = SimulatedSource([escalation], clock, region="eu-west-3")
+    now = clock.now()
+    [event] = source.collect(now - timedelta(hours=3), now).events
+    assert event.id == "escalation:deploy-v1-4-2"
+    assert event.data_origin == "simulated"
+    assert source.collect(now - timedelta(minutes=10), now).events == []  # 16 min ago
+
+
+def test_a_scenario_needs_expected_or_phases():
+    with pytest.raises(ValueError, match="either `expected` or `phases`"):
+        Scenario.model_validate(
+            {"id": "x", "title": "x", "resource": {"id": "r", "name": "r"}, "signals": {}}
+        )
