@@ -1,0 +1,33 @@
+# A standard-mode t3.micro has spent its CPU credits and is throttled to its baseline
+# (10% for a t3.micro). Offsets are minutes relative to "now" (0).
+id: cpu_credit_exhaustion
+title: CPU credits exhausted
+resource:
+  id: sim-cpu-credit-exhaustion
+  name: sim-worker-01
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 11
+signals:
+  cpu_utilization:
+    baseline: 35
+    noise: 3
+    segments:
+      - { from_min: -10, to_min: 0, value: 10 }   # throttled to baseline performance
+  cpu_credit_balance:
+    baseline: 40
+    noise: 1
+    segments:
+      - { from_min: -30, to_min: -11, value: 15 }  # draining
+      - { from_min: -10, to_min: 0, value: 2 }     # exhausted
+  memory_used: { baseline: 45, noise: 2 }
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 120, noise: 10 }
+  error_rate_5xx: { baseline: 0.3, noise: 0.2 }
+  latency_p95: { baseline: 180, noise: 15 }
+expected:
+  incident: true
+  rules: [R-CPU-CREDIT]
+  severity: medium

@@ -1,0 +1,21 @@
+# Every signal normal. Must open nothing.
+id: healthy
+title: Healthy instance
+resource:
+  id: sim-healthy
+  name: sim-api-04
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 31
+signals:
+  cpu_utilization: { baseline: 30, noise: 5 }
+  cpu_credit_balance: { baseline: 80, noise: 1 }
+  memory_used: { baseline: 45, noise: 3 }
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 120, noise: 10 }
+  error_rate_5xx: { baseline: 0.3, noise: 0.2 }
+  latency_p95: { baseline: 180, noise: 15 }
+expected:
+  incident: false

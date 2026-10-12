@@ -22,6 +22,7 @@ from sentinel.domain.observations import (
     ObservationSnapshot,
     Resource,
     SignalName,
+    Statistic,
     Unit,
 )
 from sentinel.domain.system import CollectorName
@@ -34,6 +35,18 @@ SIGNAL_UNITS: dict[SignalName, Unit] = {
     "latency_p95": "ms",
     "error_rate_5xx": "percent",
     "request_rate": "per_minute",
+}
+
+# The CloudWatch statistic AWS mode will request for each signal, so simulated series
+# look like the real ones.
+SIGNAL_STATISTICS: dict[SignalName, Statistic] = {
+    "cpu_utilization": "Average",
+    "cpu_credit_balance": "Average",
+    "memory_used": "Average",
+    "status_check_failed": "Maximum",
+    "latency_p95": "p95",
+    "error_rate_5xx": "Average",
+    "request_rate": "Average",
 }
 
 
@@ -62,6 +75,8 @@ class ScenarioExpectation(BaseModel):
     incident: bool
     rules: list[str] = []
     severity: Literal["low", "medium", "high", "critical"] | None = None
+    # Rules that must NOT trigger, with the reason they must report (rule id -> reason).
+    reasons: dict[str, str] = {}
 
 
 class Scenario(BaseModel):
@@ -111,15 +126,16 @@ def generate_series(scenario: Scenario, now: datetime) -> list[MetricSeries]:
                     value = seg.value
             value += rng.uniform(-spec.noise, spec.noise)
             unit = SIGNAL_UNITS[signal]
+            value = max(0.0, value)  # noise must not create impossible negative readings
             if unit == "percent":
-                value = min(100.0, max(0.0, value))
+                value = min(100.0, value)
             points.append(MetricPoint(t=t, v=round(value, 2)))
         series.append(
             MetricSeries(
                 resource_id=scenario.resource.id,
                 signal=signal,
                 unit=SIGNAL_UNITS[signal],
-                statistic="Average",
+                statistic=SIGNAL_STATISTICS[signal],
                 period_seconds=scenario.period_seconds,
                 source="simulator",
                 points=points,

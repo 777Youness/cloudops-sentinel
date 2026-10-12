@@ -1,0 +1,3 @@
+# Store text files with LF in the repository and check them out with LF on every OS,
+# so generated files (frontend/src/api/*) compare equal on Windows and in CI.
+* text=auto eol=lf

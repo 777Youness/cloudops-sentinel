@@ -1,0 +1,28 @@
+# A high 5xx percentage on almost no traffic (about 2 requests per minute): fewer than
+# 50 requests during the breach, so R-5XX must NOT open an incident.
+# Offsets are minutes relative to "now" (0).
+id: low_traffic_errors
+title: Errors on very low traffic
+resource:
+  id: sim-low-traffic-errors
+  name: sim-api-03
+  instance_type: t3.micro
+  credit_mode: standard
+period_seconds: 60
+history_minutes: 90
+seed: 29
+signals:
+  cpu_utilization: { baseline: 10, noise: 2 }
+  cpu_credit_balance: { baseline: 80, noise: 1 }
+  memory_used: { baseline: 40, noise: 2 }
+  status_check_failed: { baseline: 0 }
+  request_rate: { baseline: 2, noise: 0.5 }
+  error_rate_5xx:
+    baseline: 0.3
+    noise: 0.2
+    segments:
+      - { from_min: -15, to_min: 0, value: 25 }
+  latency_p95: { baseline: 180, noise: 15 }
+expected:
+  incident: false
+  reasons: { R-5XX: insufficient_traffic }
