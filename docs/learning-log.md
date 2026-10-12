@@ -62,6 +62,18 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - Idempotency: a stable event id makes "the same event seen twice" a no-op.
 - Test doubles vs the real thing: tests use SQLite `:memory:`, not a fake store.
 
+**Milestone 2c**
+- Read side vs write side: `services/incidents.py` only reads; `services/sync.py` writes.
+  Why routes must not touch the store (and the test that enforces it).
+- HTTP 404 with an error envelope vs an empty 200: what each tells the client.
+- `json_extract` in SQLite: querying inside a JSON column without a schema migration.
+- Staleness: "data as of" = last *successful* sync, not last sync.
+- Small multiples and a shared time axis: why not one chart with several y-axes.
+- Honest charts: `null` breaks a line, 0 lies; counting missing datapoints (`chartData.ts`).
+- Server state vs UI state (TanStack Query): keeping data on screen when a refetch fails.
+- Code splitting with a lazy route: the chart library loads only in the workspace.
+- Peer dependencies (`react-is`) and how to check whether a mismatch actually matters.
+
 ## Milestone 2a — all detection rules
 
 - Date: 2026-10-12
@@ -80,3 +92,15 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
   incidents are still there (SQLite). Then delete `backend/data/sentinel-local.db` and
   restart: empty history.
 - In my own words, why missing data never resolves an incident:
+
+## Milestone 2c — Overview and incident workspace
+
+- Date: 2026-10-12
+- Built: `GET /incidents/{id}`, `GET /overview`, resource health, the Overview page, the
+  incident workspace with charts, stale-data notice.
+- Found in browser review and fixed: overlapping chart labels, a clipped marker, a 5xx
+  chart flattened by a 0-100% scale, a gap counter that counted the marker margin, and a
+  resolved incident whose chart did not show the recovery (engine fix with a test).
+- To try later: open a resolved incident and explain why its chart now ends on the
+  recovered values (commit "fix(lifecycle): keep the clean window as evidence").
+- In my own words, why the UI never decides whether a value breaches:

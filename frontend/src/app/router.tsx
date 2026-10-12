@@ -1,17 +1,18 @@
-import { createBrowserRouter, Navigate } from 'react-router';
+import { createBrowserRouter } from 'react-router';
 
 import { IncidentsPage } from '../features/incidents/IncidentsPage';
+import { OverviewPage } from '../features/overview/OverviewPage';
 import { SystemPage } from '../features/system/SystemPage';
 import { AppShell } from './AppShell';
 import { NotFoundPage } from './NotFoundPage';
 
-// Only built screens are routed. Overview arrives on Day 2; Cost and Drift are not routed in V1.
+// Only built screens are routed. Resources arrive on Day 5; Cost and Drift are not routed in V1.
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <AppShell />,
     children: [
-      { index: true, element: <Navigate to="/incidents" replace /> },
+      { index: true, element: <OverviewPage /> },
       { path: 'incidents', element: <IncidentsPage /> },
       {
         // Loaded on first visit: the charting library is only needed in the workspace.

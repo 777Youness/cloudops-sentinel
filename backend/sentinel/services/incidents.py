@@ -15,6 +15,9 @@ from sentinel.store.base import Store
 
 TOP_OPEN_INCIDENTS = 5
 
+# Overview order: what needs attention first. Unknown ranks above ok: no data is not good news.
+HEALTH_ORDER = {"crit": 0, "warn": 1, "unknown": 2, "ok": 3}
+
 
 def by_importance(incidents: list[Incident]) -> list[Incident]:
     """Severity first (highest first), then most recently detected first."""
@@ -54,10 +57,13 @@ class IncidentService:
         resources = []
         if snapshot is not None:
             open_by_resource = {i.fingerprint: i for i in open_incidents}
-            resources = [
-                resource_health(r, snapshot.series, open_by_resource.get(r.id))
-                for r in snapshot.resources
-            ]
+            resources = sorted(
+                (
+                    resource_health(r, snapshot.series, open_by_resource.get(r.id))
+                    for r in snapshot.resources
+                ),
+                key=lambda h: (HEALTH_ORDER[h.health], h.resource_name),
+            )
         last_success = self._store.last_successful_sync()
         return Overview(
             mode=self._mode,

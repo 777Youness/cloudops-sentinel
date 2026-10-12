@@ -12,7 +12,7 @@ Base path `/api/v1`. The OpenAPI document (`/openapi.json`, also committed at
 | POST | `/sync` | `SyncRun` with `incidents_opened`, `incidents_updated`, `incidents_resolved`. 200 even if the sync failed: read `status`. | 409 `SYNC_IN_PROGRESS` |
 | GET | `/incidents?status=open\|resolved\|all` | `{items: IncidentSummary[], total}`, severity then recency | 422 `VALIDATION_ERROR` |
 | GET | `/incidents/{id}` | `Incident`: everything stored for it (facts, timeline, evidence series, rule ids, evidence hash), verbatim | 404 `NOT_FOUND` |
-| GET | `/overview` | `Overview`: open counts by severity, top 5 open incidents, last sync, `data_as_of`, data origin, health of every resource in the latest snapshot | — |
+| GET | `/overview` | `Overview`: open counts by severity, top 5 open incidents, last sync, `data_as_of`, data origin, health of every resource in the latest snapshot (failing, degraded, no data, healthy) | — |
 
 ## Planned
 

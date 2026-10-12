@@ -6,9 +6,9 @@ Sentinel collects operational telemetry, detects incidents with deterministic ru
 (from Day 3) asks an LLM to write an investigation in which every hypothesis must cite facts
 the code collected. Severity is rule-based. Humans decide on remediation.
 
-> **Status: V1 in progress — milestone 2b (incident lifecycle and storage).** Only
-> simulated data exists so far. AWS mode, the investigation engine and most screens are
-> not built yet. See [docs/architecture.md](docs/architecture.md) for the milestone plan.
+> **Status: V1 in progress — milestone 2c (Overview and incident workspace).** Only
+> simulated data exists so far. AWS mode, the investigation engine and the Resources
+> pages are not built yet. See [docs/architecture.md](docs/architecture.md) for the milestone plan.
 
 ## What works today
 
@@ -22,9 +22,16 @@ the code collected. Severity is rule-based. Humans decide on remediation.
 - All V1 rules (R-CPU-SAT, R-CPU-CREDIT, R-MEM, R-STATUS, R-5XX, R-LAT, C-USER-IMPACT),
   severity from one rule matrix, and facts that also record what was normal and what
   could not be checked. See [docs/detection-rules.md](docs/detection-rules.md).
-- API: `GET /api/v1/health`, `GET /api/v1/system`, `POST /api/v1/sync`, `GET /api/v1/incidents`.
-- Console: Incidents page (loading, empty, never-synced and unreachable states) and a
-  minimal System page, with a persistent simulated-data strip.
+- API: `GET /api/v1/health`, `/system`, `/overview`, `/incidents`, `/incidents/{id}`;
+  `POST /api/v1/sync`.
+- Console:
+  - **Overview**: open incidents by severity, the most important ones, data trust (origin,
+    data age, sources, what the last sync changed) and the health of every resource, with
+    missing signals named.
+  - **Incident workspace**: signal charts on one time axis (thresholds, breach windows,
+    deployment markers, visible gaps), a timeline linked to facts, and the stored facts
+    grouped as observed, checked and normal, and data gaps.
+  - Incidents and System pages; a persistent simulated-data strip; a stale-data notice.
 
 ## Run locally
 

@@ -13,9 +13,10 @@ Cost (V2) and Drift (V3) are not routed in V1.
 ## Global chrome
 
 - Simulated-data strip (local mode only), full width.
-- Sidebar (208 px): wordmark; Incidents with open count; System pinned at the bottom.
+- Sidebar (208 px): wordmark; Overview; Incidents with open count; System pinned at the bottom.
 - Top bar (44 px): Environment, Data (Simulated/AWS), Region; sync status; Sync now.
 - Filters live in the URL (`?status=open`).
+- Stale-data notice above every page when the last successful sync is older than 15 min.
 
 ## Incidents (Day 1)
 
@@ -39,7 +40,8 @@ Data sources: source, state, last success, error code + message + hint.
    - **Data trust**: data origin, last sync (outcome, relative and UTC), data age with the
      stale marker, collectors and their state, resources and rules evaluated, what the last
      sync changed (opened / updated / resolved), resources with missing signals.
-3. **Monitored resources** table: health (dot/ring + text), name + id, instance type,
+3. **Monitored resources** table, needing attention first (failing, degraded, no data,
+   healthy): health (dot/ring + text), name + id, instance type,
    open incident (link with severity), signals (`7 of 7` or the missing ones by name).
    Resource names are not links until the Resources pages exist (Day 5).
 

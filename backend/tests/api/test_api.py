@@ -208,3 +208,12 @@ def test_failed_sync_does_not_refresh_data_as_of(clock):
     assert system["last_sync"]["status"] == "failed"
     assert system["data_as_of"] == first  # the data is still the old data
     assert client.get("/api/v1/overview").json()["data_as_of"] == first
+
+
+def test_overview_lists_resources_needing_attention_first(clock):
+    client = TestClient(create_app(Settings(mode="local", db_path=":memory:"), clock))
+    client.post("/api/v1/sync")
+    health = [r["health"] for r in client.get("/api/v1/overview").json()["resources"]]
+    order = {"crit": 0, "warn": 1, "unknown": 2, "ok": 3}
+    assert health == sorted(health, key=order.get)
+    assert health[0] == "crit" and health[-1] == "ok"
