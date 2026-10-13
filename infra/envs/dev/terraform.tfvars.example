@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (gitignored) and adjust. No secrets belong here.
+aws_region  = "eu-west-3"
+environment = "dev"
+
+# Added in Day 4b:
+# operator_cidr = "203.0.113.10/32"   # your public IP, /32 only (documentation range shown)

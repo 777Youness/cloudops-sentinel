@@ -1,0 +1,129 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DescribeMonitoredInstances",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeInstanceCreditSpecifications"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "${region}"
+        }
+      }
+    },
+    {
+      "Sid": "ReadMetrics",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:GetMetricData"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "${region}"
+        }
+      }
+    },
+    {
+      "Sid": "ReadAlarmStates",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:DescribeAlarms"
+      ],
+      "Resource": "arn:aws:cloudwatch:${region}:${account_id}:alarm:cloudops-sentinel-*"
+    },
+    {
+      "Sid": "QueryWorkloadLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:StartQuery",
+        "logs:GetQueryResults",
+        "logs:FilterLogEvents"
+      ],
+      "Resource": "arn:aws:logs:${region}:${account_id}:log-group:${log_group_name}"
+    },
+    {
+      "Sid": "CancelOwnQueries",
+      "Effect": "Allow",
+      "Action": [
+        "logs:StopQuery"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "${region}"
+        }
+      }
+    },
+    {
+      "Sid": "ReadDeploymentHistory",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:ListCommands"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "${region}"
+        }
+      }
+    },
+    {
+      "Sid": "DenyChangesAndRemediation",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:Associate*",
+        "ec2:Attach*",
+        "ec2:Authorize*",
+        "ec2:Create*",
+        "ec2:Delete*",
+        "ec2:Detach*",
+        "ec2:Disassociate*",
+        "ec2:Import*",
+        "ec2:Modify*",
+        "ec2:Reboot*",
+        "ec2:Replace*",
+        "ec2:Reset*",
+        "ec2:Revoke*",
+        "ec2:Run*",
+        "ec2:Start*",
+        "ec2:Stop*",
+        "ec2:Terminate*",
+        "ssm:Cancel*",
+        "ssm:Create*",
+        "ssm:Delete*",
+        "ssm:Deregister*",
+        "ssm:Put*",
+        "ssm:Register*",
+        "ssm:SendCommand",
+        "ssm:StartAutomationExecution",
+        "ssm:StartSession",
+        "ssm:Update*",
+        "cloudwatch:Delete*",
+        "cloudwatch:Disable*",
+        "cloudwatch:Enable*",
+        "cloudwatch:Put*",
+        "cloudwatch:Set*",
+        "cloudwatch:Start*",
+        "cloudwatch:Stop*",
+        "cloudwatch:Tag*",
+        "cloudwatch:Untag*",
+        "logs:Associate*",
+        "logs:Create*",
+        "logs:Delete*",
+        "logs:Disassociate*",
+        "logs:Put*",
+        "logs:Tag*",
+        "logs:Untag*",
+        "logs:Unmask",
+        "iam:*",
+        "sts:AssumeRole"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
