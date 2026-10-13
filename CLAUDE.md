@@ -39,6 +39,10 @@ Design references (read before changing anything they cover):
    (Put*, Create*, Delete*, Modify*, Update*, Run*, Start*, Stop*, Terminate*, Authorize*,
    Revoke*, SendCommand, …). Scripts in `scripts/` that change the demo workload are run by
    the human, outside Sentinel.
+   The only exception, by exact name: `logs:StartQuery` and `logs:StopQuery` (CloudWatch
+   Logs Insights query control; AWS access level Read; they change no resource or data),
+   allowed in `collectors/aws/` only, on the workload log group, during sync. The allowed
+   set is pinned by `infra/policies/sentinel-readonly.json` and its test (ADR 0016).
 5. **Remediation is advice.** Every RemediationOption has `requires_human = true`.
    The UI may show a command to copy; it never executes anything.
 6. **Simulated data is always labelled.** Every entity carries `data_origin`. Local mode shows
