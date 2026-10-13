@@ -109,7 +109,7 @@ restarts the phases.
 | 2b | Full lifecycle (merge, peak severity, resolution), SQLite, deployment events | Built; automated checks pass |
 | 2c | `GET /incidents/{id}`, `GET /overview`, Overview page, Investigation workspace (no AI) | Built; automated checks pass; reviewed in a browser (simulated mode) |
 | 3 | Investigation engine: evidence bundle, provider interface, mock + one real provider, validation | Built; automated checks pass; reviewed in a browser with the mock (no real-provider run recorded yet) |
-| 4 | Terraform: bootstrap + dev env, workload, CloudWatch agent, SSM scripts | Not started |
+| 4 | Terraform: bootstrap + dev env, workload, CloudWatch agent, SSM scripts | 4a prepared: `infra/` structure, local state (ADR 0016), read-only policy and its test, `docs/cost.md`; **no AWS resources yet** |
 | 5 | AWS mode: Boto3 collectors, Resources pages | Not started |
 | 6 | Docker Compose, CI hardening, all UI states | Not started |
 | 7 | Demo, documentation, review, `v0.1.0` | Not started |

@@ -92,6 +92,16 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - Test isolation: a module-level object with side effects (sentinel.main's app) and how
   it touched a developer's database until conftest.py fixed it.
 
+**Day 4a**
+- Terraform state: what it records, local vs S3 backend, locking, and why losing it
+  orphans resources (ADR 0016).
+- Public subnet + internet gateway vs NAT gateway vs VPC endpoints; why SSM needs only
+  outbound 443.
+- IAM evaluation: explicit Deny beats Allow; resource-level permissions; global condition
+  keys (`aws:RequestedRegion`); why a wrong scope fails closed.
+- Least privilege as a test: an allowlist of actions in `test_readonly_policy.py`, and
+  mutation testing to prove the test can fail.
+
 ## Milestone 2a — all detection rules
 
 - Date: 2026-10-12

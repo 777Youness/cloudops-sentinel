@@ -2,6 +2,7 @@
 .env
 *.pem
 *.tfvars
+*.tfvars.json
 !*.tfvars.example
 .venv/
 # Local SQLite databases (backend/data/)
@@ -13,6 +14,11 @@ data/
 *.tfstate
 *.tfstate.*
 tfplan
+# Saved plans can contain sensitive values in plain text, whatever their name
+*.tfplan
+# Terraform crash logs can contain sensitive data from the run
+crash.log
+crash.*.log
 
 # Python
 __pycache__/
