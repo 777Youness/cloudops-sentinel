@@ -1,7 +1,21 @@
-# Day 4a: structure only. This configuration creates no resources yet, so a plan is empty.
+# Day 4b: the disposable workload that Sentinel monitors (ADR 0016, ADR 0017).
 #
-# Day 4b adds (ADR 0016): VPC, internet gateway, one public subnet and its route table,
-# the default security group locked down, the workload security group (no inbound except
-# the app port from var.operator_cidr), the workload instance role and profile, the log
-# group (3-day retention), the t3.micro instance, and the read-only role for Sentinel,
-# whose policy is ../../policies/sentinel-readonly.json (rendered with templatefile()).
+#   network.tf        VPC, internet gateway, one public subnet, route table, default SG locked down
+#   security.tf       workload security group: app port from operator_cidr only, HTTPS out
+#   iam.tf            instance role: SSM core + scoped CloudWatch permissions (no CreateLogGroup)
+#   compute.tf        t3.micro, AL2023, IMDSv2, encrypted gp3 root, shutdown behaviour terminate
+#   observability.tf  log group (retention) and one CPU alarm without actions
+#
+# Not here, on purpose: Sentinel's read-only role (separate PR after the termination test,
+# D10) and the operator's own permissions (infra/policies/operator-terraform.json, attached
+# by hand, never by Terraform).
+
+locals {
+  name = "cloudops-sentinel-${var.environment}"
+
+  vpc_cidr    = "10.20.0.0/16"
+  subnet_cidr = "10.20.1.0/24"
+
+  # Workload paths on the instance. The access log is what the agent ships to CloudWatch.
+  access_log_path = "/var/log/cloudops-workload/access.log"
+}

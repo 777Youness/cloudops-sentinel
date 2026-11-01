@@ -1,0 +1,340 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadEc2InTheRegion",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:Describe*"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "${region}"
+        }
+      }
+    },
+    {
+      "Sid": "ManageWorkloadNetwork",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:CreateVpc",
+        "ec2:DeleteVpc",
+        "ec2:ModifyVpcAttribute",
+        "ec2:CreateSubnet",
+        "ec2:DeleteSubnet",
+        "ec2:ModifySubnetAttribute",
+        "ec2:CreateInternetGateway",
+        "ec2:DeleteInternetGateway",
+        "ec2:AttachInternetGateway",
+        "ec2:DetachInternetGateway",
+        "ec2:CreateRouteTable",
+        "ec2:DeleteRouteTable",
+        "ec2:CreateRoute",
+        "ec2:DeleteRoute",
+        "ec2:AssociateRouteTable",
+        "ec2:DisassociateRouteTable",
+        "ec2:CreateSecurityGroup",
+        "ec2:DeleteSecurityGroup",
+        "ec2:AuthorizeSecurityGroupIngress",
+        "ec2:AuthorizeSecurityGroupEgress",
+        "ec2:RevokeSecurityGroupIngress",
+        "ec2:RevokeSecurityGroupEgress",
+        "ec2:ModifySecurityGroupRules",
+        "ec2:CreateTags",
+        "ec2:DeleteTags"
+      ],
+      "Resource": "arn:aws:ec2:${region}:${account_id}:*"
+    },
+    {
+      "Sid": "LaunchOnlyTheWorkloadInstanceShape",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances"
+      ],
+      "Resource": "arn:aws:ec2:${region}:${account_id}:instance/*",
+      "Condition": {
+        "StringEquals": {
+          "ec2:InstanceType": "t3.micro",
+          "ec2:MetadataHttpTokens": "required"
+        }
+      }
+    },
+    {
+      "Sid": "LaunchOnlyEncryptedGp3Volumes",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances"
+      ],
+      "Resource": "arn:aws:ec2:${region}:${account_id}:volume/*",
+      "Condition": {
+        "Bool": {
+          "ec2:Encrypted": "true"
+        },
+        "StringEquals": {
+          "ec2:VolumeType": "gp3"
+        }
+      }
+    },
+    {
+      "Sid": "LaunchFromAmazonImagesOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances"
+      ],
+      "Resource": [
+        "arn:aws:ec2:${region}::image/*",
+        "arn:aws:ec2:${region}::snapshot/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "ec2:Owner": "amazon"
+        }
+      }
+    },
+    {
+      "Sid": "LaunchIntoTheWorkloadNetwork",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances"
+      ],
+      "Resource": [
+        "arn:aws:ec2:${region}:${account_id}:network-interface/*",
+        "arn:aws:ec2:${region}:${account_id}:security-group/*",
+        "arn:aws:ec2:${region}:${account_id}:subnet/*"
+      ]
+    },
+    {
+      "Sid": "ChangeOrTerminateOnlyProjectInstances",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:TerminateInstances",
+        "ec2:ModifyInstanceAttribute",
+        "ec2:ModifyInstanceMetadataOptions",
+        "ec2:ModifyInstanceCreditSpecification"
+      ],
+      "Resource": "arn:aws:ec2:${region}:${account_id}:instance/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Project": "cloudops-sentinel"
+        }
+      }
+    },
+    {
+      "Sid": "UseTheAwsManagedEbsKeyThroughEc2Only",
+      "Effect": "Allow",
+      "Action": [
+        "kms:Decrypt",
+        "kms:DescribeKey",
+        "kms:GenerateDataKeyWithoutPlaintext",
+        "kms:ReEncryptFrom",
+        "kms:ReEncryptTo"
+      ],
+      "Resource": "arn:aws:kms:${region}:${account_id}:key/*",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "ec2.${region}.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "GrantsOnlyForEbs",
+      "Effect": "Allow",
+      "Action": [
+        "kms:CreateGrant"
+      ],
+      "Resource": "arn:aws:kms:${region}:${account_id}:key/*",
+      "Condition": {
+        "StringEquals": {
+          "kms:ViaService": "ec2.${region}.amazonaws.com"
+        },
+        "Bool": {
+          "kms:GrantIsForAWSResource": "true"
+        }
+      }
+    },
+    {
+      "Sid": "ManageWorkloadRoleAndProfile",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:ListRoleTags",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:PutRolePolicy",
+        "iam:GetRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:DetachRolePolicy",
+        "iam:ListAttachedRolePolicies",
+        "iam:ListInstanceProfilesForRole",
+        "iam:CreateInstanceProfile",
+        "iam:DeleteInstanceProfile",
+        "iam:GetInstanceProfile",
+        "iam:TagInstanceProfile",
+        "iam:UntagInstanceProfile",
+        "iam:AddRoleToInstanceProfile",
+        "iam:RemoveRoleFromInstanceProfile"
+      ],
+      "Resource": [
+        "arn:aws:iam::${account_id}:role/cloudops-sentinel-*",
+        "arn:aws:iam::${account_id}:instance-profile/cloudops-sentinel-*"
+      ]
+    },
+    {
+      "Sid": "AttachOnlyTheSsmCorePolicy",
+      "Effect": "Allow",
+      "Action": [
+        "iam:AttachRolePolicy"
+      ],
+      "Resource": "arn:aws:iam::${account_id}:role/cloudops-sentinel-*",
+      "Condition": {
+        "ArnEquals": {
+          "iam:PolicyARN": "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        }
+      }
+    },
+    {
+      "Sid": "PassTheWorkloadRoleToEc2Only",
+      "Effect": "Allow",
+      "Action": [
+        "iam:PassRole"
+      ],
+      "Resource": "arn:aws:iam::${account_id}:role/cloudops-sentinel-*",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "ec2.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "ManageWorkloadLogGroup",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:PutRetentionPolicy",
+        "logs:TagResource",
+        "logs:UntagResource",
+        "logs:ListTagsForResource"
+      ],
+      "Resource": [
+        "arn:aws:logs:${region}:${account_id}:log-group:/cloudops-sentinel/*",
+        "arn:aws:logs:${region}:${account_id}:log-group:/cloudops-sentinel/*:*"
+      ]
+    },
+    {
+      "Sid": "ListLogGroupsInTheRegion",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups"
+      ],
+      "Resource": "arn:aws:logs:${region}:${account_id}:log-group:*"
+    },
+    {
+      "Sid": "ManageWorkloadAlarms",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricAlarm",
+        "cloudwatch:DeleteAlarms",
+        "cloudwatch:DescribeAlarms",
+        "cloudwatch:TagResource",
+        "cloudwatch:UntagResource",
+        "cloudwatch:ListTagsForResource"
+      ],
+      "Resource": "arn:aws:cloudwatch:${region}:${account_id}:alarm:cloudops-sentinel-*"
+    },
+    {
+      "Sid": "ReadTheAl2023AmiParameter",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter"
+      ],
+      "Resource": "arn:aws:ssm:${region}::parameter/aws/service/ami-amazon-linux-latest/*"
+    },
+    {
+      "Sid": "OperatorShellOnProjectInstances",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:StartSession"
+      ],
+      "Resource": "arn:aws:ec2:${region}:${account_id}:instance/*",
+      "Condition": {
+        "StringEquals": {
+          "aws:ResourceTag/Project": "cloudops-sentinel"
+        }
+      }
+    },
+    {
+      "Sid": "OperatorShellDocument",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:StartSession"
+      ],
+      "Resource": "arn:aws:ssm:${region}:${account_id}:document/SSM-SessionManagerRunShell"
+    },
+    {
+      "Sid": "OperatorOwnSessions",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:TerminateSession",
+        "ssm:ResumeSession"
+      ],
+      "Resource": "arn:aws:ssm:${region}:${account_id}:session/$${aws:username}-*"
+    },
+    {
+      "Sid": "LeftoverCheckReads",
+      "Effect": "Allow",
+      "Action": [
+        "tag:GetResources",
+        "cloudwatch:ListMetrics"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "${region}"
+        }
+      }
+    },
+    {
+      "Sid": "LeftoverCheckIamReads",
+      "Effect": "Allow",
+      "Action": [
+        "iam:ListRoles",
+        "iam:ListInstanceProfiles"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "NeverCreateLongLivedCredentialsOrOrganizations",
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateUser",
+        "iam:CreateAccessKey",
+        "iam:UpdateAccessKey",
+        "iam:CreateLoginProfile",
+        "iam:UpdateLoginProfile",
+        "iam:CreateServiceSpecificCredential",
+        "iam:UploadSSHPublicKey",
+        "organizations:*",
+        "sso:*",
+        "sso-directory:*",
+        "identitystore:*",
+        "ec2:CreateKeyPair",
+        "ec2:ImportKeyPair",
+        "ec2:AllocateAddress",
+        "ec2:CreateNatGateway",
+        "ec2:CreateVpcEndpoint",
+        "ec2:MonitorInstances",
+        "kms:CreateKey",
+        "cloudwatch:PutDashboard",
+        "cloudtrail:CreateTrail",
+        "secretsmanager:CreateSecret"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

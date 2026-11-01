@@ -1,0 +1,86 @@
+#!/bin/bash
+# CloudOps Sentinel workload bootstrap. Rendered by Terraform (compute.tf), run once as root
+# by cloud-init at first boot. Output: /var/log/cloud-init-output.log.
+#
+# Order matters: the safety timer is installed FIRST, before anything that can fail, so a
+# broken bootstrap still ends with the instance powering itself off (and, with shutdown
+# behaviour "terminate", being terminated). STATUS: UNTESTED on a real EC2 instance.
+set -u
+
+# --- 1. Safety timer -----------------------------------------------------------------------
+# `systemctl poweroff`, not `halt`: AWS documents that halt does not initiate a shutdown, so
+# the instance would keep running (and billing). OnBootSec counts from boot; if it is
+# already in the past when the timer starts, systemd fires it immediately (fail-safe).
+cat > /etc/systemd/system/cloudops-safety-shutdown.service <<'UNIT'
+[Unit]
+Description=CloudOps Sentinel safety shutdown (shutdown behaviour terminate: the instance is deleted)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl poweroff
+UNIT
+
+cat > /etc/systemd/system/cloudops-safety-shutdown.timer <<'UNIT'
+[Unit]
+Description=Power off ${safety_timer_minutes} minutes after boot (CloudOps Sentinel safety timer, UNTESTED)
+
+[Timer]
+OnBootSec=${safety_timer_minutes}min
+AccuracySec=1min
+Unit=cloudops-safety-shutdown.service
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+if ! { systemctl daemon-reload && systemctl enable --now cloudops-safety-shutdown.timer; }; then
+  # Fallback: a one-shot shutdown. It does not survive a reboot, but the instance never
+  # runs without any timer.
+  shutdown -P "+${safety_timer_minutes}" "CloudOps Sentinel safety timer (fallback)"
+fi
+
+set -euo pipefail
+
+# --- 2. CloudWatch agent (from the AL2023 repositories, over HTTPS) -------------------------
+dnf install -y amazon-cloudwatch-agent
+
+# --- 3. Workload app: stdlib Python 3.9 (the AL2023 system python3), unprivileged user -----
+id -u cloudops-workload >/dev/null 2>&1 || useradd --system --no-create-home --shell /sbin/nologin cloudops-workload
+install -d -m 0755 /opt/cloudops-workload
+install -d -m 0755 -o cloudops-workload -g cloudops-workload /var/log/cloudops-workload
+
+cat > /opt/cloudops-workload/app.py <<'PYEOF'
+${app_py}
+PYEOF
+chmod 0644 /opt/cloudops-workload/app.py
+
+cat > /etc/systemd/system/cloudops-workload.service <<'UNIT'
+[Unit]
+Description=CloudOps Sentinel workload app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=cloudops-workload
+Environment=WORKLOAD_PORT=${app_port}
+Environment=WORKLOAD_ACCESS_LOG=${access_log_path}
+ExecStart=/usr/bin/python3 /opt/cloudops-workload/app.py
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now cloudops-workload.service
+
+# --- 4. Agent configuration: one metric (mem_used_percent, InstanceId only) + the access log
+cat > /opt/aws/amazon-cloudwatch-agent/etc/cloudops-sentinel.json <<'JSONEOF'
+${agent_config}
+JSONEOF
+
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
+  -a fetch-config -m ec2 -s \
+  -c file:/opt/aws/amazon-cloudwatch-agent/etc/cloudops-sentinel.json
+
+echo "cloudops-sentinel bootstrap complete"
