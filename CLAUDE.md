@@ -4,7 +4,7 @@ Read this file before every task. It governs how you work in this repository.
 If a request conflicts with this file, stop and say so instead of silently choosing.
 
 Status: v0.2 (architecture approved) — current target is **V1 (incident investigation)**,
-current milestone is **Day 1** (see `docs/architecture.md`).
+current milestone is **Day 4b** (see `docs/architecture.md`).
 
 ---
 

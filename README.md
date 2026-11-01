@@ -6,8 +6,10 @@ Sentinel collects operational telemetry, detects incidents with deterministic ru
 asks an LLM (on demand) to write an investigation in which every hypothesis must cite facts
 the code collected. Severity is rule-based. Humans decide on remediation.
 
-> **Status: V1 in progress — Day 3 (LLM-assisted investigation).** Only simulated data
-> exists so far. AWS mode and the Resources pages are not built yet. See [docs/architecture.md](docs/architecture.md) for the milestone plan.
+> **Status: V1 in progress — Day 4b (AWS workload infrastructure).** Only simulated data
+> exists so far. The Terraform for the workload is prepared but defines no resources yet,
+> and nothing has been deployed to AWS. AWS mode and the Resources pages are not built yet.
+> See [docs/architecture.md](docs/architecture.md) for the milestone plan.
 
 ## What works today
 
