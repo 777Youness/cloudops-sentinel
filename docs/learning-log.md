@@ -102,6 +102,24 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - Least privilege as a test: an allowlist of actions in `test_readonly_policy.py`, and
   mutation testing to prove the test can fail.
 
+**Day 4b**
+- Console credentials for the CLI (`aws login`) and the `credential_process` bridge for
+  tools that do not support them yet (ADR 0017). Why no access key, and why no
+  Organizations/Identity Center here (credits).
+- `ec2:RunInstances` is authorised against several resources at once (image, instance,
+  network interface, security group, subnet, volume); condition keys per resource type
+  (`ec2:InstanceType`, `ec2:Encrypted`, `ec2:Owner`) let AWS refuse a wrong shape.
+- `iam:PassRole` + `iam:PassedToService`: handing a role to a service is a permission of
+  its own.
+- CloudWatch metric identity = namespace + name + dimensions: how one agent setting can
+  multiply custom metrics, and how `append_dimensions` / `omit_hostname` prevent it.
+- Instance-initiated shutdown behaviour: `poweroff` terminates, `halt` does not; systemd
+  timers (`OnBootSec`, fire-immediately-if-past) as a fail-safe.
+- What survives an instance termination (log group, alarm, network, IAM) vs a
+  `terraform destroy` (only metric data).
+- Budgets and credits: `IncludeCredit` defaults to true, so a budget can stay silent.
+- Text-based infrastructure tests: what they catch, and what only a real apply shows.
+
 ## Milestone 2a — all detection rules
 
 - Date: 2026-10-12
@@ -144,3 +162,16 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - To try later: install Ollama, point the env vars at it (see `backend/.env.example`), run
   an investigation, save it to `docs/examples/`, and count how often attempts = 2.
 - In my own words, why a schema alone is not enough to trust an LLM's reply:
+
+## Day 4b — workload infrastructure (written, not applied)
+
+- Date: 2026-11-01
+- Built: Terraform for the workload (17 resources), stdlib workload app, CloudWatch agent
+  config, systemd safety timer, operator policy and its renderer, read-only leftover check,
+  guardrail, operator-policy and workload tests, ADR 0017.
+- Not done yet (needs AWS, by me): the 15-minute termination test, the 240-minute
+  functional run. The safety timer stays UNTESTED until then.
+- To try later: in `infra/envs/dev/templates/user_data.sh.tftpl` replace `poweroff` with
+  `halt` and run `uv run pytest tests/test_infra_guardrails.py` in `backend/`: which test
+  fails, and why would `halt` cost money?
+- In my own words, why the timer is installed before `dnf install`:

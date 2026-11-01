@@ -1,6 +1,10 @@
 # ADR 0016 — Dev workload: public subnet, SSM-only access, local Terraform state, read-only role
 
-- Status: accepted (Day 4a: decided and documented; resources are created in Day 4b)
+- Status: accepted (Day 4a: decided and documented; resources are created in Day 4b).
+  **Amended by [ADR 0017](0017-workload-deployment-operator-access-and-safety-timer.md):**
+  operator sign-in uses an IAM user with `aws login` (no IAM Identity Center or
+  Organizations), and the safety timer terminates the instance instead of stopping it
+  (decision 5 below). Sentinel's role and its trust (decision 4) arrive in a later PR.
 - Date: 2026-10-12 (facts checked on this date; sources below)
 
 ## Context

@@ -2,5 +2,12 @@
 aws_region  = "eu-west-3"
 environment = "dev"
 
-# Added in Day 4b:
-# operator_cidr = "203.0.113.10/32"   # your public IP, /32 only (documentation range shown)
+# Required. Your public IPv4 address as a /32 (the documentation address below is a
+# placeholder and must be replaced). Only this address can reach the app port.
+operator_cidr = "203.0.113.10/32"
+
+# Optional (defaults shown).
+# app_port             = 8080
+# availability_zone    = "eu-west-3a"
+# log_retention_days   = 3
+# safety_timer_minutes = 240   # 15 only for the controlled termination test (infra/README.md)
