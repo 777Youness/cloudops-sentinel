@@ -138,5 +138,10 @@ Until 1 has passed and is recorded here, the timer is documented as UNTESTED.
 - AWS itself refuses a wrong instance type, IMDSv1, an unencrypted or non-gp3 volume, or a
   non-Amazon image for the operator, even if the Terraform code is changed.
 - Every new permission is a reviewed edit of one JSON file and one test.
+- The operator policy must fit a customer managed policy (6,144 characters, whitespace not
+  counted). Its `Sid`s are therefore short; their meaning is recorded in
+  `SID_PURPOSES` in `backend/tests/test_operator_policy.py`, which also fails above 6,000
+  characters. If it outgrows that, split it into two managed policies rather than widen
+  actions to wildcards.
 - The operator policy may be incomplete at first: AccessDenied errors are expected and are
   fixed one action at a time, never by widening to a wildcard.

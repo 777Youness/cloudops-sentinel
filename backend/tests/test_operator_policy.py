@@ -30,6 +30,40 @@ _spec.loader.exec_module(render_policy)
 
 VARIABLES = {"region": "eu-west-3", "account_id": "111122223333", "log_group_name": "/x"}
 
+# AWS quota: a customer managed policy may hold at most 6,144 characters, whitespace not
+# counted (IAM and STS quotas). The example account id has 12 digits like every real one,
+# so the rendered size here is the size you will paste. Margin kept below the hard limit.
+IAM_MANAGED_POLICY_MAX_CHARS = 6144
+SIZE_TARGET_CHARS = 6000
+
+# Sids are short because they count toward the size limit. Their meaning lives here, and
+# the test below fails if a statement is added, removed or renamed without updating it.
+SID_PURPOSES = {
+    "Ec2Read": "ec2:Describe* in the region (Terraform reads)",
+    "Network": "create/delete the VPC, subnet, IGW, routes, security groups, tags",
+    "RunT3Micro": "RunInstances: instance must be t3.micro with IMDSv2",
+    "RunGp3Enc": "RunInstances: volumes must be encrypted gp3",
+    "RunAmazonAmi": "RunInstances: image and snapshot owned by Amazon",
+    "RunInVpc": "RunInstances: network interface, security group, subnet",
+    "TaggedInst": "terminate/modify only instances tagged Project=cloudops-sentinel",
+    "EbsKms": "use the EBS KMS key only through EC2",
+    "EbsGrant": "KMS grants only for AWS resources, through EC2",
+    "RoleProfile": "manage roles and instance profiles named cloudops-sentinel-*",
+    "AttachSsm": "attach only AmazonSSMManagedInstanceCore",
+    "PassToEc2": "pass cloudops-sentinel-* roles to EC2 only",
+    "LogGroup": "manage log groups /cloudops-sentinel/*",
+    "ListLogs": "list log groups in the region",
+    "Alarms": "manage alarms cloudops-sentinel-*",
+    "AmiParam": "read the public AL2023 AMI parameter",
+    "ShellInst": "Session Manager on project-tagged instances",
+    "ShellDoc": "the Session Manager shell document",
+    "OwnSessions": "terminate/resume only your own sessions",
+    "CheckReads": "reads for scripts/cost-check.sh",
+    "CheckIam": "IAM listing for scripts/cost-check.sh",
+    "DenyRisky": "explicit Deny: long-lived credentials, Organizations, Identity Center, "
+    "forbidden resources",
+}
+
 # Allowed wildcard actions, each with a reason. Everything else is an exact action name.
 ALLOWED_WILDCARD_ACTIONS = {
     "ec2:Describe*": "Terraform reads many EC2 attributes; Describe calls change nothing "
@@ -115,6 +149,20 @@ def test_policy_renders_to_valid_json_with_unique_sids():
     assert policy["Version"] == "2012-10-17"
     sids = [s["Sid"] for s in policy["Statement"]]
     assert len(sids) == len(set(sids))
+
+
+def test_rendered_policy_fits_the_iam_managed_policy_size_limit():
+    rendered = render_policy.render(POLICY_PATH.read_text(encoding="utf-8"), VARIABLES)
+    size = len(re.sub(r"\s", "", rendered))
+    assert size <= IAM_MANAGED_POLICY_MAX_CHARS, f"{size} > {IAM_MANAGED_POLICY_MAX_CHARS}"
+    assert size < SIZE_TARGET_CHARS, f"{size} chars: margin below the AWS limit is too thin"
+
+
+def test_every_sid_is_short_alphanumeric_and_documented():
+    sids = [s["Sid"] for s in _policy()["Statement"]]
+    assert sids == list(SID_PURPOSES), "update SID_PURPOSES with the policy"
+    for sid in sids:
+        assert re.fullmatch(r"[A-Za-z0-9]{1,16}", sid), sid  # IAM allows only A-Z, a-z, 0-9
 
 
 def test_rendering_rejects_unknown_variables_and_keeps_iam_policy_variables():

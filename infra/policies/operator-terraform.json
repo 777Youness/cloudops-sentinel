@@ -2,7 +2,7 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "ReadEc2InTheRegion",
+      "Sid": "Ec2Read",
       "Effect": "Allow",
       "Action": [
         "ec2:Describe*"
@@ -15,7 +15,7 @@
       }
     },
     {
-      "Sid": "ManageWorkloadNetwork",
+      "Sid": "Network",
       "Effect": "Allow",
       "Action": [
         "ec2:CreateVpc",
@@ -47,7 +47,7 @@
       "Resource": "arn:aws:ec2:${region}:${account_id}:*"
     },
     {
-      "Sid": "LaunchOnlyTheWorkloadInstanceShape",
+      "Sid": "RunT3Micro",
       "Effect": "Allow",
       "Action": [
         "ec2:RunInstances"
@@ -61,7 +61,7 @@
       }
     },
     {
-      "Sid": "LaunchOnlyEncryptedGp3Volumes",
+      "Sid": "RunGp3Enc",
       "Effect": "Allow",
       "Action": [
         "ec2:RunInstances"
@@ -77,7 +77,7 @@
       }
     },
     {
-      "Sid": "LaunchFromAmazonImagesOnly",
+      "Sid": "RunAmazonAmi",
       "Effect": "Allow",
       "Action": [
         "ec2:RunInstances"
@@ -93,7 +93,7 @@
       }
     },
     {
-      "Sid": "LaunchIntoTheWorkloadNetwork",
+      "Sid": "RunInVpc",
       "Effect": "Allow",
       "Action": [
         "ec2:RunInstances"
@@ -105,7 +105,7 @@
       ]
     },
     {
-      "Sid": "ChangeOrTerminateOnlyProjectInstances",
+      "Sid": "TaggedInst",
       "Effect": "Allow",
       "Action": [
         "ec2:TerminateInstances",
@@ -121,7 +121,7 @@
       }
     },
     {
-      "Sid": "UseTheAwsManagedEbsKeyThroughEc2Only",
+      "Sid": "EbsKms",
       "Effect": "Allow",
       "Action": [
         "kms:Decrypt",
@@ -138,7 +138,7 @@
       }
     },
     {
-      "Sid": "GrantsOnlyForEbs",
+      "Sid": "EbsGrant",
       "Effect": "Allow",
       "Action": [
         "kms:CreateGrant"
@@ -154,7 +154,7 @@
       }
     },
     {
-      "Sid": "ManageWorkloadRoleAndProfile",
+      "Sid": "RoleProfile",
       "Effect": "Allow",
       "Action": [
         "iam:CreateRole",
@@ -185,7 +185,7 @@
       ]
     },
     {
-      "Sid": "AttachOnlyTheSsmCorePolicy",
+      "Sid": "AttachSsm",
       "Effect": "Allow",
       "Action": [
         "iam:AttachRolePolicy"
@@ -198,7 +198,7 @@
       }
     },
     {
-      "Sid": "PassTheWorkloadRoleToEc2Only",
+      "Sid": "PassToEc2",
       "Effect": "Allow",
       "Action": [
         "iam:PassRole"
@@ -211,7 +211,7 @@
       }
     },
     {
-      "Sid": "ManageWorkloadLogGroup",
+      "Sid": "LogGroup",
       "Effect": "Allow",
       "Action": [
         "logs:CreateLogGroup",
@@ -227,7 +227,7 @@
       ]
     },
     {
-      "Sid": "ListLogGroupsInTheRegion",
+      "Sid": "ListLogs",
       "Effect": "Allow",
       "Action": [
         "logs:DescribeLogGroups"
@@ -235,7 +235,7 @@
       "Resource": "arn:aws:logs:${region}:${account_id}:log-group:*"
     },
     {
-      "Sid": "ManageWorkloadAlarms",
+      "Sid": "Alarms",
       "Effect": "Allow",
       "Action": [
         "cloudwatch:PutMetricAlarm",
@@ -248,7 +248,7 @@
       "Resource": "arn:aws:cloudwatch:${region}:${account_id}:alarm:cloudops-sentinel-*"
     },
     {
-      "Sid": "ReadTheAl2023AmiParameter",
+      "Sid": "AmiParam",
       "Effect": "Allow",
       "Action": [
         "ssm:GetParameter"
@@ -256,7 +256,7 @@
       "Resource": "arn:aws:ssm:${region}::parameter/aws/service/ami-amazon-linux-latest/*"
     },
     {
-      "Sid": "OperatorShellOnProjectInstances",
+      "Sid": "ShellInst",
       "Effect": "Allow",
       "Action": [
         "ssm:StartSession"
@@ -269,7 +269,7 @@
       }
     },
     {
-      "Sid": "OperatorShellDocument",
+      "Sid": "ShellDoc",
       "Effect": "Allow",
       "Action": [
         "ssm:StartSession"
@@ -277,7 +277,7 @@
       "Resource": "arn:aws:ssm:${region}:${account_id}:document/SSM-SessionManagerRunShell"
     },
     {
-      "Sid": "OperatorOwnSessions",
+      "Sid": "OwnSessions",
       "Effect": "Allow",
       "Action": [
         "ssm:TerminateSession",
@@ -286,7 +286,7 @@
       "Resource": "arn:aws:ssm:${region}:${account_id}:session/$${aws:username}-*"
     },
     {
-      "Sid": "LeftoverCheckReads",
+      "Sid": "CheckReads",
       "Effect": "Allow",
       "Action": [
         "tag:GetResources",
@@ -300,7 +300,7 @@
       }
     },
     {
-      "Sid": "LeftoverCheckIamReads",
+      "Sid": "CheckIam",
       "Effect": "Allow",
       "Action": [
         "iam:ListRoles",
@@ -309,7 +309,7 @@
       "Resource": "*"
     },
     {
-      "Sid": "NeverCreateLongLivedCredentialsOrOrganizations",
+      "Sid": "DenyRisky",
       "Effect": "Deny",
       "Action": [
         "iam:CreateUser",
