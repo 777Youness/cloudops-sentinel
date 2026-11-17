@@ -24,7 +24,7 @@ from sentinel.domain.investigation import (
     InvestigationResult,
 )
 from sentinel.domain.system import LlmStatus
-from sentinel.investigation.bundle import build_bundle, fact_ids
+from sentinel.investigation.bundle import build_bundle, fact_index
 from sentinel.investigation.prompt import PROMPT_VERSION, build_prompt
 from sentinel.investigation.providers.base import LlmProvider, ProviderError
 from sentinel.investigation.validator import ValidationFailure, validate_output
@@ -130,7 +130,7 @@ class InvestigationService:
 
     def _investigate(self, incident: Incident, provider: LlmProvider) -> Investigation:
         bundle = build_bundle(incident)
-        allowed = fact_ids(bundle)
+        allowed = fact_index(bundle)  # id -> kind and rule, for the validator
         started = self._clock.now()
         findings: InvestigationFindings | None = None
         error: InvestigationError | None = None

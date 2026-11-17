@@ -70,14 +70,21 @@ JSON documents (ADR 0013).
 POST /api/v1/incidents/{id}/investigation
   1. read the stored incident (404 if unknown); 503 LLM_NOT_CONFIGURED if the selected
      provider is incomplete; 409 if this incident is already being investigated
-  2. investigation.bundle   incident -> evidence bundle (facts, timeline, identity)
-  3. investigation.prompt   bundle -> prompt (evidence between markers, declared as data)
+  2. investigation.bundle   incident -> evidence bundle (facts, timeline, identity, and
+                            evidence_scope: what each fact kind means, what was not collected)
+  3. investigation.prompt   bundle -> prompt (evidence between markers, declared as data;
+                            reasoning rules: correlation is not causation, ...)
   4. provider.complete      prompt -> reply text          (mock by default, ADR 0015)
-  5. investigation.validator reply -> findings, or a rejection reason
+  5. investigation.validator reply -> findings, or a rejection reason (structural only:
+       schema, citations, commands, and "high" confidence that joins breaches of different
+       rules or rests on data gaps)
        rejected once -> retry with the reason; rejected twice -> status "failed"
   6. store: save the Investigation (own table, schema v2); the incident is never written
 GET /api/v1/incidents/{id}/investigation -> latest run, outdated = hash differs
 ```
+
+Real-provider behaviour is measured by hand with `backend/evals/investigation_reliability.py`
+(cases A-E of `backend/tests/investigation_cases.py`, opt-in, at most 10 calls).
 
 ## Incident lifecycle
 

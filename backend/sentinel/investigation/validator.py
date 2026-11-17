@@ -14,16 +14,26 @@ Rejection reasons (one test each in tests/unit/test_investigation_validator.py):
   duplicate_id          two items share an id
   text_too_long         a text above MAX_TEXT characters
   command_in_text       a remediation or check that contains a shell command
+  confidence_unsupported a "high" hypothesis whose citations cannot carry it: it joins
+                        breaches of two or more rules (co-occurrence is a correlation; no
+                        fact kind records a causal link), or it rests on data gaps only
+
+These checks are structural: they read ids, kinds, rules and the confidence level, never
+the wording. Whether a statement says more than its facts show is guided by the prompt
+and judged by the human reader (docs/PROJECT-MASTERY.md, "Citations are not proof").
 """
 
 import json
 import re
+from collections.abc import Mapping
 from typing import Any
 
-from sentinel.domain.investigation import InvestigationFindings
+from sentinel.domain.investigation import Hypothesis, InvestigationFindings
+from sentinel.investigation.bundle import CitedFact
 
 MAX_TEXT = 300
 MAX_ITEMS = 5
+BREACH_KINDS = {"threshold_breach", "baseline_deviation"}
 
 # Keys the model may never set, at any depth. The strict schema would reject them too;
 # checking first gives a precise reason, which makes the single retry more useful.
@@ -102,7 +112,28 @@ def _texts(findings: InvestigationFindings) -> list[tuple[str, str]]:
     return texts
 
 
-def validate_output(text: str, fact_ids: set[str]) -> InvestigationFindings:
+def _check_confidence(hypothesis: Hypothesis, facts: Mapping[str, CitedFact]) -> None:
+    """ "high" must rest on direct evidence. Two kinds of citation set can never carry it."""
+    if hypothesis.confidence != "high":
+        return
+    cited = [facts[i] for i in hypothesis.cites]
+    rules = sorted({f.rule_id or "?" for f in cited if f.kind in BREACH_KINDS})
+    if len(rules) >= 2:
+        raise ValidationFailure(
+            "confidence_unsupported",
+            f"{_quote_ids([hypothesis.id])} is rated high but joins breaches of "
+            f"{', '.join(rules)}. Breaches that co-occur are a correlation, not a shown "
+            "cause: rate it medium or low, or cite only facts that directly show it.",
+        )
+    if all(f.kind == "data_gap" for f in cited):
+        raise ValidationFailure(
+            "confidence_unsupported",
+            f"{_quote_ids([hypothesis.id])} is rated high but cites only data gaps, which "
+            "are missing evidence: rate it low, or cite observed facts.",
+        )
+
+
+def validate_output(text: str, facts: Mapping[str, CitedFact]) -> InvestigationFindings:
     data = _parse_json(text)
     if not isinstance(data, dict):
         raise ValidationFailure("not_json", "The reply must be one JSON object.")
@@ -148,13 +179,16 @@ def validate_output(text: str, fact_ids: set[str]) -> InvestigationFindings:
         if not item.cites:
             raise ValidationFailure("missing_citation", f"{item.id} cites no fact.")
     for item in items:
-        unknown = sorted(set(item.cites) - fact_ids)
+        unknown = sorted(set(item.cites) - facts.keys())
         if unknown:
             raise ValidationFailure(
                 "unknown_fact",
                 f"{_quote_ids([item.id])} cites {_quote_ids(unknown)}, which "
                 f"{'is' if len(unknown) == 1 else 'are'} not in the evidence.",
             )
+
+    for hypothesis in findings.hypotheses:
+        _check_confidence(hypothesis, facts)
 
     ids = [item.id for item in items]
     duplicates = sorted({i for i in ids if ids.count(i) > 1})

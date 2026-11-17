@@ -11,7 +11,7 @@ The same semantics as the simulator (and as detection expects):
 """
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sentinel.collectors.aws.ec2 import is_burstable
@@ -130,7 +130,8 @@ def collect_metrics(
                     result.get("Timestamps", []), result.get("Values", []), strict=True
                 ):
                     if t + period <= now:  # the period still running is incomplete: drop it
-                        points[query_id].append(MetricPoint(t=t, v=float(v)))
+                        # botocore returns these in the machine's local zone; store UTC.
+                        points[query_id].append(MetricPoint(t=t.astimezone(UTC), v=float(v)))
             problems += [m.get("Value", "") for m in response.get("Messages", [])]
             token = response.get("NextToken")
             if not token:

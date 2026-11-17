@@ -4,25 +4,79 @@ Only facts, the timeline and the incident's identity go in. No raw time series: 
 must reason from facts it can cite, not from numbers it read off a series. Severity is
 included as read-only context; the model cannot return it (see domain/investigation.py).
 
+`evidence_scope` says what the facts mean and what was NOT collected. Without it, a model
+reads "no deployment fact" as "no deployment" and "no log fact" as "logs were checked".
+
 Pure: no I/O, no clock.
 """
 
 import json
+from dataclasses import dataclass
 from typing import Any
 
 from sentinel.domain.incidents import Incident
+from sentinel.domain.observations import DataOrigin
 
 # Free text that did not come from a code template (deployment labels today, log samples
 # from Day 5) is cut to this length: it is data, and data is kept small.
 MAX_TEXT = 300
 
 
+# What each fact kind means. A within_normal fact is evidence against an explanation that
+# needs that signal abnormal; a data_gap is unknown, never normal and never abnormal.
+FACT_KINDS = {
+    "threshold_breach": "observed: the signal crossed the rule threshold in the window",
+    "baseline_deviation": "observed: the signal deviated from its own recent baseline",
+    "within_normal": "observed: the signal was checked and was within its normal range",
+    "event": "observed: a recorded change (for example a deployment) at that time",
+    "alarm_state": "observed: a CloudWatch alarm state",
+    "log_pattern": "observed: a pattern counted in logs",
+    "data_gap": "not observed: the signal could not be measured, so its state is unknown",
+}
+
+# Sentinel never collects these, in any mode. Listed so the model cannot claim it saw them.
+NOT_COLLECTED = [
+    "application log lines, error messages and stack traces",
+    "request traces and the health of downstream dependencies",
+    "per-process CPU and memory",
+    "instance configuration (instance type, CPU credit mode, launch time)",
+    "raw metric datapoints (only the facts derived from them)",
+]
+
+# Whether a sync of this origin records deployment events. The AWS source returns none yet
+# (collectors/aws/source.py, `events=[]`): there, no event fact means "unknown", not "none".
+DEPLOYMENT_EVENTS_COLLECTED: dict[DataOrigin, bool] = {"simulated": True, "aws": False}
+
+
+@dataclass(frozen=True)
+class CitedFact:
+    """What the validator needs to know about a fact a reply may cite."""
+
+    kind: str
+    rule_id: str | None
+
+
 def _clip(text: str) -> str:
     return text if len(text) <= MAX_TEXT else text[: MAX_TEXT - 1] + "…"
 
 
+def evidence_scope(incident: Incident) -> dict[str, Any]:
+    deployments = DEPLOYMENT_EVENTS_COLLECTED[incident.data_origin]
+    not_in_evidence = list(NOT_COLLECTED)
+    if not deployments:
+        not_in_evidence.insert(
+            0, "deployment and other change events: not collected for this data origin"
+        )
+    return {
+        "fact_kinds": FACT_KINDS,
+        "deployment_events_collected": deployments,
+        "not_in_evidence": not_in_evidence,
+    }
+
+
 def build_bundle(incident: Incident) -> dict[str, Any]:
     return {
+        "evidence_scope": evidence_scope(incident),
         "incident": {
             "id": incident.id,
             "title": incident.title,
@@ -71,3 +125,8 @@ def bundle_json(bundle: dict[str, Any]) -> str:
 
 def fact_ids(bundle: dict[str, Any]) -> set[str]:
     return {f["id"] for f in bundle["facts"]}
+
+
+def fact_index(bundle: dict[str, Any]) -> dict[str, CitedFact]:
+    """Every fact a reply may cite, with the kind and rule the validator checks against."""
+    return {f["id"]: CitedFact(kind=f["kind"], rule_id=f["rule_id"]) for f in bundle["facts"]}

@@ -1,6 +1,6 @@
 """CloudWatch metrics: one batched GetMetricData, complete periods only, gaps stay gaps."""
 
-from datetime import timedelta
+from datetime import UTC, timedelta, timezone
 
 from botocore.stub import ANY
 
@@ -70,6 +70,26 @@ def test_results_become_series_with_units_and_sources(stubs):
     assert series.period_seconds == 300
     assert series.source == "cloudwatch:AWS/EC2/CPUUtilization"
     assert [p.v for p in series.points] == [40.0, 41.0, 97.0]
+
+
+def test_timestamps_become_utc_whatever_zone_botocore_returns(stubs):
+    # botocore parses CloudWatch's epoch timestamps into the machine's local zone (seen on a
+    # real sync: "+01:00"). Facts and statements say "UTC", so the boundary converts.
+    resource = _resource()
+    stamps, values = five_minute_points(NOW, [40.0, 41.0])
+    paris = timezone(timedelta(hours=1))
+    stubs.cloudwatch.add_response(
+        "get_metric_data",
+        {
+            "MetricDataResults": [
+                metric_result("m0_0", [t.astimezone(paris) for t in stamps], values)
+            ]
+        },
+        _expected_params(resource),
+    )
+    [series] = collect_metrics(stubs.clients.cloudwatch, [resource], WINDOW_START, NOW).series
+    assert [p.t for p in series.points] == stamps
+    assert all(p.t.utcoffset() == timedelta(0) and p.t.tzinfo is UTC for p in series.points)
 
 
 def test_the_period_still_running_is_dropped(stubs):

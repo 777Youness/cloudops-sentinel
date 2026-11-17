@@ -5,6 +5,15 @@ by hand and saved here, so the behaviour of real models stays reviewable.
 
 No run has been recorded yet.
 
+## Reliability cases A-E (any configured provider)
+
+From `backend/`, with the provider configured as for the app:
+```bash
+uv run python -m evals.investigation_reliability --yes --save
+```
+It writes `<date>-<model>-reliability-eval.json` here. Read the replies against the
+"expected" line of each case: the script reports validation, not reasoning quality.
+
 ## How to record one (Ollama, local, no key)
 
 1. Install Ollama from its official site and pull a model that follows instructions well.
