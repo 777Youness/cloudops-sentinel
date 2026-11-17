@@ -3,8 +3,9 @@
 Read this file before every task. It governs how you work in this repository.
 If a request conflicts with this file, stop and say so instead of silently choosing.
 
-Status: v0.2 (architecture approved) — current target is **V1 (incident investigation)**,
-current milestone is **Day 4b** (see `docs/architecture.md`).
+Status: V1 (incident investigation) released as a portfolio version on 2026-11-17: Days 1–5b
+built, the real-AWS demo run once. Day 6 (Docker Compose, CI hardening) is not started
+(see `docs/architecture.md`).
 
 ---
 

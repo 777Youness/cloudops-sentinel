@@ -5,8 +5,9 @@ AWS Price List bulk files for eu-west-3 (`pricing.us-east-1.amazonaws.com/offers
 <service>/<version>/eu-west-3/index.json`), read on 2026-11-01, with the file's publication
 date. Anything not found there is marked **unverified**.
 
-Status: Day 5b (2026-11-17). The workload was applied and destroyed by the owner
-(the last run: 19 resources, empty state afterwards); nothing is running now. The actual
+Status: V1 release (2026-11-17). The workload was applied and destroyed by the owner,
+including the 5xx demo run (19 resources, empty state and a clean leftover check
+afterwards); nothing is running now. The actual
 bill for those runs has not been recorded here. The 5xx demo (infra/README.md section 8)
 adds about 60 log lines per minute while it runs (a few kB in total) and no resource. Update this page in the same change as any billable resource (CLAUDE.md).
 
@@ -79,8 +80,8 @@ Sources: [terminate](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/termina
   6-month free plan; older accounts keep the legacy Free Tier
   ([2025 announcement](https://aws.amazon.com/about-aws/whats-new/2025/07/aws-free-tier-credits-month-free-plan/)).
   Which one applies to this account is **unverified** until checked in the Billing console.
-- The account has active credits (about $155.91, estimated remaining $152.57 when checked
-  by the owner). Whether they cover every item above is **unverified**.
+- The account has promotional credits (amount checked by the owner in the Billing
+  console, not recorded here). Whether they cover every item above is **unverified**.
 - **Never enable AWS Organizations or IAM Identity Center**: AWS warned that creating an
   organization would immediately expire these credits (ADR 0017).
 

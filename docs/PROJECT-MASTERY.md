@@ -14,11 +14,12 @@ Details live in the ADRs (`docs/adr/`), the code and the tests: this guide links
 | AWS-VALIDATED | Observed working in a real AWS account |
 | PLANNED | Designed or scheduled, not implemented |
 
-Current state (2026-11-17), as reported by the owner. AWS-VALIDATED: the full Terraform
-(19 resources) applied and destroyed to an empty state; the app answered 200; Sentinel
-assumed its read-only role; the ec2, cloudwatch_metrics and cloudwatch_logs collectors all
-succeeded with 7/7 signals; no incident on the healthy workload. NOT yet observed on AWS:
-an incident from real data (the 5xx demo, C8), the safety timer.
+Current state (2026-11-17, V1 portfolio release), as reported by the owner. AWS-VALIDATED:
+the full Terraform (19 resources) applied and destroyed to an empty state, leftover check
+clean; Sentinel assumed its read-only role; all three collectors succeeded with 7/7 signals
+on a healthy workload; the 5xx demo (C8) opened a real high-severity incident (peak 21.1%);
+GroqCloud `openai/gpt-oss-20b` investigated it (C3). NOT observed on AWS: automatic
+resolution (the workload was destroyed with the incident still open), the safety timer.
 
 ---
 
@@ -122,7 +123,7 @@ Code: `services/sync.py`, `store/sqlite.py`.
 - Resolution needs 10 clean minutes (hysteresis); missing data never resolves.
 Docs: `docs/detection-rules.md`. Tests: `tests/unit/test_rule_*.py`, `test_lifecycle.py`.
 
-### C3. Investigation (LOCAL with the mock; one real Groq run on INC-0001 with prompt v1)
+### C3. Investigation (LOCAL with the mock; real Groq runs on INC-0001 with prompts v1 and v2)
 1. Bundle = incident identity + facts + timeline (no raw series, text clipped to 300) +
    `evidence_scope`: what each fact kind means, and what Sentinel did not collect.
 2. Prompt (v2) puts the evidence between markers declared as data, with reasoning rules.
@@ -256,7 +257,7 @@ opens one incident for the instance with fact `F1` (template text, window, peak)
 (`tests/aws/test_aws_sync.py`, first test). Code: `collectors/aws/`, `services/sync.py`.
 ADR 0018.
 
-### C8. From one HTTP 500 to an incident (LOCAL; the AWS run is the next step)
+### C8. From one HTTP 500 to an incident (AWS-VALIDATED once: detection; resolution not observed)
 The demo (ADR 0019, `infra/README.md` section 8) uses the real rule, unchanged:
 1. **The request.** `scripts/demo_traffic.py` sends 1 request per second; every 5th goes
    to `GET /fault/500`, a fixed route that answers 500 (only when the dev workload sets

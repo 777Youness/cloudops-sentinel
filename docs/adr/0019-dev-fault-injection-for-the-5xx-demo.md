@@ -1,6 +1,7 @@
 # ADR 0019 — A dev-only HTTP fault route to demonstrate a real 5xx incident
 
-- Status: accepted (Day 5b). Implemented and tested locally; **not yet run on AWS**.
+- Status: accepted (Day 5b). Implemented and tested locally; **run once on AWS by the owner
+  (2026-11-17)**: detection confirmed, resolution not observed (see "Verification on AWS").
 - Date: 2026-11-17
 
 ## Context
@@ -56,7 +57,14 @@ smaller: no `ssm:SendCommand`, no script on the instance, no new IAM permission.
 - The demo shows one rule (R-5XX). CPU, memory and status-check incidents still need their
   own fault mechanisms.
 
-## Verification on AWS (to do)
-The steps in `infra/README.md` section 8: the access log shows `"status":500` lines in
-CloudWatch Logs; the first sync after about 9 minutes opens one high-severity R-5XX incident
-with `data_origin = aws`; the healthy phase resolves it.
+## Verification on AWS
+The steps in `infra/README.md` section 8. Run once by the owner on 2026-11-17:
+- Confirmed: the sync opened one incident, severity **high**, `data_origin = aws`: the 5xx
+  rate stayed at or above 5% for 11 minutes, peak 21.1%. The same incident also recorded
+  R-CPU-CREDIT (low credit balance) with CPU utilization near 1%.
+- Not observed: resolution by the healthy phase. The workload was destroyed while the
+  incident was still open, so automatic resolution on AWS remains unvalidated (it is tested
+  locally and with mocked AWS).
+- Found: CloudWatch timestamps arrived in local time, so a fact printed the wrong UTC hour;
+  fixed in the collector with a regression test. Record:
+  `docs/examples/2026-11-17-gpt-oss-20b-INC-0001.json`.
