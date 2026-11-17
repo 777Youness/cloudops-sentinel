@@ -113,6 +113,10 @@ global services such as IAM resolve to us-east-1, which does not affect this pol
 IAM Deny has no region condition). `ssm:SendCommand` and `ssm:StartSession` are Write
 actions (denied).
 
+**Update 2026-11-17 (Day 5 review):** `logs:DescribeLogGroups` was added to the policy on
+`"*"` (region-pinned): the reference lists it for the `StartQuery` operation and it has no
+resource type, so a log-group ARN cannot scope it. The second question below is still open.
+
 **Still open** (cannot be settled from documentation; the first read-only test in Day 4b
 settles them, and any failure is a denied call, never extra access):
 - The reference's operations table lists, for the `StartQuery` operation, the actions

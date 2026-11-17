@@ -120,6 +120,17 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
 - Budgets and credits: `IncludeCredit` defaults to true, so a budget can stay silent.
 - Text-based infrastructure tests: what they catch, and what only a real apply shows.
 
+**Day 5**
+- Polling vs push for telemetry; why the sync is the only AWS caller (ADR 0003, 0018).
+- `GetMetricData` batching, periods and statistics; why the running period is dropped.
+- Logs Insights: queries billed per GB scanned, bounded windows, `StopQuery` on timeout;
+  "no log line" is missing data, "requests without 5xx" is 0 %.
+- Partial failure as a first-class result: collector states, `partial` syncs, and why a
+  failed collector must look like missing data, never like healthy data.
+- Assume-role chains: `role_arn` + `source_profile`, and why the backend's identity is the
+  role, not the human who signed in.
+- botocore Stubber: testing AWS code with no network and no credentials.
+
 ## Milestone 2a — all detection rules
 
 - Date: 2026-10-12
@@ -175,3 +186,14 @@ Maintained as the build goes. Each line: the concept, where it lives, why it mat
   `halt` and run `uv run pytest tests/test_infra_guardrails.py` in `backend/`: which test
   fails, and why would `halt` cost money?
 - In my own words, why the timer is installed before `dnf install`:
+
+## Day 5 — AWS mode (tested with mocked AWS, not yet against AWS)
+
+- Date: 2026-11-17
+- Built: `collectors/aws/` (discovery, metrics, Logs Insights), per-collector status and
+  partial syncs, Sentinel's read-only role in Terraform, ADR 0018, Stubber tests.
+- Not done yet (needs AWS, by me): apply the role, check `--profile sentinel`, one real sync.
+- To try later: in `tests/aws/test_aws_sync.py`, make the metrics failure report `state="ok"`
+  in `collectors/aws/source.py` and run `uv run pytest tests/aws`: which test fails, and
+  what would the console have shown?
+- In my own words, why the backend assumes a role instead of using my credentials:

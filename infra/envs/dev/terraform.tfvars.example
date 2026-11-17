@@ -6,6 +6,9 @@ environment = "dev"
 # placeholder and must be replaced). Only this address can reach the app port.
 operator_cidr = "203.0.113.10/32"
 
+# Required. Who may assume Sentinel's read-only role (normally your operator IAM user).
+sentinel_reader_arn = "arn:aws:iam::<ACCOUNT_ID>:user/<OPERATOR_USER>"
+
 # Optional (defaults shown).
 # app_port             = 8080
 # availability_zone    = "eu-west-3a"

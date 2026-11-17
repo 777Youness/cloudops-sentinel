@@ -78,3 +78,13 @@ variable "log_retention_days" {
     error_message = "log_retention_days must be 1 or 3."
   }
 }
+
+variable "sentinel_reader_arn" {
+  description = "IAM user or role allowed to assume Sentinel's read-only role (your operator user, for example arn:aws:iam::<account>:user/<name>). Set it in terraform.tfvars."
+  type        = string
+
+  validation {
+    condition     = can(regex("^arn:aws:iam::[0-9]{12}:(user|role)/[A-Za-z0-9+=,.@_/-]+$", var.sentinel_reader_arn))
+    error_message = "sentinel_reader_arn must be one IAM user or role ARN (no wildcard, no account root)."
+  }
+}

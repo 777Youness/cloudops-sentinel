@@ -9,7 +9,7 @@ Base path `/api/v1`. The OpenAPI document (`/openapi.json`, also committed at
 |---|---|---|---|
 | GET | `/health` | `{"status": "ok"}` (liveness, touches nothing) | — |
 | GET | `/system` | `SystemStatus` (mode, environment, region, LLM status, last sync, `data_as_of` = end of the last successful sync) | — |
-| POST | `/sync` | `SyncRun` with `incidents_opened`, `incidents_updated`, `incidents_resolved`. 200 even if the sync failed: read `status`. | 409 `SYNC_IN_PROGRESS` |
+| POST | `/sync` | `SyncRun` with `incidents_opened`, `incidents_updated`, `incidents_resolved`. 200 even if the sync failed: read `status` (`success`; `partial` = some collectors failed or degraded, their signals are missing; `failed` = nothing collected) and each `collectors[]` entry. The only endpoint that calls AWS (aws mode). | 409 `SYNC_IN_PROGRESS` |
 | GET | `/incidents?status=open\|resolved\|all` | `{items: IncidentSummary[], total}`, severity then recency | 422 `VALIDATION_ERROR` |
 | GET | `/incidents/{id}` | `Incident`: everything stored for it (facts, timeline, evidence series, rule ids, evidence hash), verbatim | 404 `NOT_FOUND` |
 | POST | `/incidents/{id}/investigation` | `InvestigationResult`. **The only endpoint that calls an LLM provider.** 200 even when the run failed (provider error, or the reply was rejected twice): read `investigation.status` and `investigation.error` | 404 `NOT_FOUND`, 409 `INVESTIGATION_IN_PROGRESS`, 503 `LLM_NOT_CONFIGURED` |

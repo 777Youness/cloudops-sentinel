@@ -16,7 +16,9 @@ never represented as 0.
   (oldest → newest, complete periods only).
 - `OpsEvent`: id (stable across syncs), resource_id, kind (`deployment`), at, label,
   source, data_origin. An observation: code never claims an event caused an incident.
-- `ObservationSnapshot`: collected_at, window, data_origin, resources, series, events.
+- `ObservationSnapshot`: collected_at, window, data_origin, resources, series, events,
+  `collector_statuses` (Day 5: how each part of a multi-part source fared; a failed part's
+  signals are absent, i.e. missing data, never healthy).
 
 **Incidents** (`incidents.py`)
 - `Fact`: id (`F1`…, unique within its incident), kind (`threshold_breach`,
@@ -57,4 +59,5 @@ never represented as 0.
 
 ## Planned (not implemented)
 
-- Day 5: `LogSample` and `ResourceSummary` with AWS mode.
+- `LogSample` and `ResourceSummary` (Resources pages), deployment events from SSM, alarm
+  states. AWS mode itself exists since Day 5 (ADR 0018) and produces the shapes above.

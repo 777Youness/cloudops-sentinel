@@ -90,9 +90,26 @@ def test_failing_collector_is_reported_not_raised(client):
     assert run["collectors"][0]["error"]["code"] == "ConnectionError"
 
 
-def test_aws_mode_fails_honestly():
-    with pytest.raises(RuntimeError, match="not implemented"):
-        create_app(Settings(mode="aws"))
+def test_aws_mode_starts_without_calling_aws(monkeypatch):
+    import boto3
+
+    from sentinel.collectors.aws.source import AwsSource
+
+    def no_session(*args, **kwargs):
+        raise AssertionError("startup must not create a boto3 session")
+
+    monkeypatch.setattr(boto3, "Session", no_session)
+    app = create_app(Settings(mode="aws", db_path=":memory:"))
+    container = app.state.container
+    assert isinstance(container.sync._source, AwsSource)
+    client = TestClient(app)
+    assert client.get("/api/v1/system").json()["mode"] == "aws"
+    assert client.get("/api/v1/incidents").status_code == 200  # GETs never collect
+
+
+def test_aws_mode_uses_its_own_database_file():
+    assert Settings(mode="aws", db_path=None).resolved_db_path().endswith("sentinel-aws.db")
+    assert Settings(mode="local", db_path=None).resolved_db_path().endswith("sentinel-local.db")
 
 
 def test_full_scenario_set_opens_one_incident_per_incident_scenario(clock):

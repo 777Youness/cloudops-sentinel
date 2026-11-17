@@ -8,6 +8,8 @@ from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel
 
+from sentinel.domain.system import CollectorStatus
+
 DataOrigin = Literal["simulated", "aws"]
 
 # V1 signal vocabulary.
@@ -86,3 +88,8 @@ class ObservationSnapshot(BaseModel):
     resources: list[Resource]
     series: list[MetricSeries]
     events: list[OpsEvent] = []
+    # How each part of a multi-part source fared (AWS: ec2, cloudwatch_metrics,
+    # cloudwatch_logs). A failed part means its signals are MISSING in this snapshot, not
+    # healthy: detection sees no data (data_gap facts, no resolution). Empty for sources
+    # that report as one unit (the simulator).
+    collector_statuses: list[CollectorStatus] = []

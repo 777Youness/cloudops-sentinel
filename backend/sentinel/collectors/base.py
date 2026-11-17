@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Protocol
 
 from sentinel.domain.observations import DataOrigin, ObservationSnapshot
-from sentinel.domain.system import CollectorName
+from sentinel.domain.system import CollectorError, CollectorName
 
 
 class TelemetrySource(Protocol):
@@ -17,7 +17,18 @@ class TelemetrySource(Protocol):
     def collect(self, window_start: datetime, window_end: datetime) -> ObservationSnapshot:
         """Return normalized observations for [window_start, window_end].
 
-        Raises an exception if the source is unreachable; the sync service turns it into a
-        CollectorStatus instead of crashing.
+        A source made of several parts reports a part that failed in
+        `snapshot.collector_statuses` and still returns what the other parts collected.
+        If nothing usable can be collected it raises (CollectionError when it can explain
+        why); the sync service turns that into a failed SyncRun instead of crashing.
         """
         ...
+
+
+class CollectionError(Exception):
+    """The source could not collect anything. Carries a translated, user-facing error."""
+
+    def __init__(self, collector: CollectorName, error: CollectorError) -> None:
+        super().__init__(error.message)
+        self.collector = collector
+        self.error = error

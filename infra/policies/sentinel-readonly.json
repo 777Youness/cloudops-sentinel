@@ -60,6 +60,19 @@
       }
     },
     {
+      "Sid": "ListLogGroupsForQueries",
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLogGroups"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:RequestedRegion": "${region}"
+        }
+      }
+    },
+    {
       "Sid": "ReadDeploymentHistory",
       "Effect": "Allow",
       "Action": [

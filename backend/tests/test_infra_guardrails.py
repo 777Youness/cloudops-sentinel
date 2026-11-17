@@ -145,6 +145,19 @@ def test_the_only_egress_is_https():
     assert "egress {" not in text
 
 
+# AWS accepts only these characters in security group and rule descriptions (VPC user
+# guide, "Security group rules"). The first real apply failed on an apostrophe.
+SG_DESCRIPTION = re.compile(r"^[a-zA-Z0-9 ._\-:/()#,@\[\]+=;{}!$*]{0,255}$")
+
+
+def test_security_group_descriptions_use_only_characters_aws_accepts():
+    security = _tf("security.tf")
+    descriptions = re.findall(r'^\s*description\s*=\s*"([^"]*)"', security, re.MULTILINE)
+    assert len(descriptions) == 3
+    for description in descriptions:
+        assert SG_DESCRIPTION.match(description), f"invalid characters: {description!r}"
+
+
 def test_default_security_group_is_managed_without_rules():
     block = _block(_all_tf(), 'resource "aws_default_security_group" "main"')
     assert "ingress" not in block and "egress" not in block
@@ -239,10 +252,45 @@ def test_instance_role_attaches_only_the_ssm_core_policy():
     assert attached == ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"]
 
 
-def test_terraform_never_manages_the_operator_or_sentinel_policies():
+def test_terraform_never_manages_the_operator_policies():
     text = _all_tf()
     assert "operator-terraform.json" not in text
-    assert "sentinel-readonly.json" not in text, "the read-only role is a later PR (D10)"
+    assert "operator-assume-sentinel.json" not in text
+
+
+def test_sentinel_readonly_policy_is_used_only_by_the_sentinel_role():
+    iam = _tf("iam.tf")
+    assert iam.count("sentinel-readonly.json") == 1
+    policy = _block(iam, 'resource "aws_iam_role_policy" "sentinel_readonly"')
+    assert "sentinel-readonly.json" in policy
+    assert _setting(policy, "role") == "aws_iam_role.sentinel_readonly.id"
+    assert _setting(policy, "log_group_name") == "aws_cloudwatch_log_group.access.name"
+    # The instance role never gets Sentinel's permissions, and vice versa.
+    workload = _block(iam, 'resource "aws_iam_role_policy" "cloudwatch_agent"')
+    assert _setting(workload, "role") == "aws_iam_role.workload.id"
+
+
+def test_sentinel_role_trusts_exactly_one_named_principal():
+    role = _block(_tf("iam.tf"), 'resource "aws_iam_role" "sentinel_readonly"')
+    assert "Principal = { AWS = var.sentinel_reader_arn }" in role
+    assert 'Action    = "sts:AssumeRole"' in role
+    assert _setting(role, "max_session_duration") == "3600"
+    variable = _block(_tf("variables.tf"), 'variable "sentinel_reader_arn"')
+    assert "default" not in variable
+    # One user or role ARN: no "*" and no account root (":root") can pass the validation.
+    assert "(user|role)/" in variable
+
+
+def test_operator_may_only_assume_the_sentinel_role():
+    policy = json.loads(
+        (ROOT / "infra" / "policies" / "operator-assume-sentinel.json").read_text(encoding="utf-8")
+    )
+    [statement] = policy["Statement"]
+    assert statement["Effect"] == "Allow"
+    assert statement["Action"] == ["sts:AssumeRole"]
+    assert statement["Resource"] == "arn:aws:iam::${account_id}:role/cloudops-sentinel-dev-readonly"
+    name = _block(_tf("iam.tf"), 'resource "aws_iam_role" "sentinel_readonly"')
+    assert _setting(name, "name") == '"${local.name}-readonly"'
 
 
 # --- Logs and alarm -------------------------------------------------------------------------

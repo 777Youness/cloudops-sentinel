@@ -196,7 +196,7 @@ frameworks.
 - Errors: typed domain exceptions mapped to the envelope
   `{"error": {"code", "message", "hint"}}` in one place (`api/errors.py`).
 - AWS errors are translated in `collectors/aws/errors.py` into `CollectorStatus` with a human
-  hint (e.g. ExpiredToken → "Run `aws sso login --profile sentinel`").
+  hint (e.g. ExpiredToken → "Sign in again: `aws login --profile sentinel-login`").
 - No module-level mutable state except the service container built in `main.py`.
 - `ruff format` and `ruff check` must pass.
 
