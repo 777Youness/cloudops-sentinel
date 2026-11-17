@@ -16,7 +16,7 @@ resource "aws_security_group" "workload" {
 
 resource "aws_vpc_security_group_ingress_rule" "app_from_operator" {
   security_group_id = aws_security_group.workload.id
-  description       = "Workload app from the operator's /32 only"
+  description       = "Workload app from operator /32 only"
   ip_protocol       = "tcp"
   from_port         = var.app_port
   to_port           = var.app_port

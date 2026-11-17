@@ -10,6 +10,7 @@ dependencies = [
     "pydantic-settings",
     "pyyaml",
     "httpx",  # one HTTP call to the LLM provider (investigation/providers only), from Day 3
+    "boto3>=1.44.4",
 ]
 
 [dependency-groups]

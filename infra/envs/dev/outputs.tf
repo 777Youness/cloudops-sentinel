@@ -30,5 +30,10 @@ output "safety_timer_minutes" {
 
 output "ssm_session_command" {
   description = "Open a shell on the instance (Session Manager plugin required)."
-  value       = "aws ssm start-session --target ${aws_instance.workload.id} --region ${var.aws_region} --profile sentinel-admin"
+  value       = "aws ssm start-session --target ${aws_instance.workload.id} --region ${var.aws_region} --profile sentinel-terraform"
+}
+
+output "sentinel_readonly_role_arn" {
+  description = "Role the sentinel profile assumes (role_arn in ~/.aws/config, infra/README.md)."
+  value       = aws_iam_role.sentinel_readonly.arn
 }

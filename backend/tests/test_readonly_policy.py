@@ -30,6 +30,9 @@ APPROVED_ACTIONS = {
     "logs:GetQueryResults": "read the result of that query",
     "logs:StopQuery": "cancel Sentinel's own query on timeout (exception below)",
     "logs:FilterLogEvents": "bounded log samples as evidence",
+    # The SAR operations table lists it as an action of the StartQuery operation; it has no
+    # resource type, so it can only be granted on "*" (region-pinned). List level.
+    "logs:DescribeLogGroups": "listed by the SAR for the StartQuery operation (Logs Insights)",
     "ssm:ListCommands": "deployment events: history of the operator's deploy commands",
 }
 
@@ -90,6 +93,8 @@ TEMPLATE_VARIABLES = {"region", "account_id", "log_group_name"}
 #   list_logs.html  StartQuery, GetQueryResults, FilterLogEvents: log-group* required, Read,
 #                   arn:${Partition}:logs:${Region}:${Account}:log-group:${LogGroupName}
 #                   StopQuery: no resource type (so "*"), Read
+#                   DescribeLogGroups: no resource type (so "*"), List; the operations
+#                   table lists it (and FilterLogEvents) for the StartQuery operation
 #   list_ssm.html   ListCommands: no resource type (so "*"), List
 LOG_GROUP = "arn:aws:logs:${region}:${account_id}:log-group:${log_group_name}"
 ALARMS = "arn:aws:cloudwatch:${region}:${account_id}:alarm:cloudops-sentinel-*"
@@ -102,6 +107,7 @@ EXPECTED_SCOPE = {
     "logs:GetQueryResults": LOG_GROUP,
     "logs:FilterLogEvents": LOG_GROUP,
     "logs:StopQuery": "*",
+    "logs:DescribeLogGroups": "*",
     "ssm:ListCommands": "*",
 }
 

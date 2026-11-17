@@ -64,3 +64,37 @@ resource "aws_iam_instance_profile" "workload" {
   name = "${local.name}-workload"
   role = aws_iam_role.workload.name
 }
+
+# --- Sentinel's read-only role (Day 5, ADR 0018) --------------------------------------------
+# The identity the Sentinel backend uses (profile "sentinel"). Its only permission is the
+# tested template infra/policies/sentinel-readonly.json: ten read actions, region-pinned,
+# with an explicit Deny on every write. Only var.sentinel_reader_arn may assume it, and only
+# with an identity policy of its own (infra/policies/operator-assume-sentinel.json).
+
+data "aws_caller_identity" "current" {} # needs no permission
+
+resource "aws_iam_role" "sentinel_readonly" {
+  name                 = "${local.name}-readonly"
+  description          = "CloudOps Sentinel collector: read-only telemetry access"
+  max_session_duration = 3600
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { AWS = var.sentinel_reader_arn }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "sentinel_readonly" {
+  name = "sentinel-readonly"
+  role = aws_iam_role.sentinel_readonly.id
+
+  policy = templatefile("${path.module}/../../policies/sentinel-readonly.json", {
+    region         = var.aws_region
+    account_id     = data.aws_caller_identity.current.account_id
+    log_group_name = aws_cloudwatch_log_group.access.name
+  })
+}

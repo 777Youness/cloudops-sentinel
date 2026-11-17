@@ -147,6 +147,13 @@ def test_last_successful_sync_skips_failed_runs(store):
     assert store.last_successful_sync().id == "SYNC-0001"
 
 
+def test_a_partial_sync_stored_data_so_it_counts_as_data_as_of(store):
+    store.record_sync(_run("SYNC-0001", minutes=0))
+    store.record_sync(_run("SYNC-0002", minutes=5).model_copy(update={"status": "partial"}))
+    store.record_sync(_run("SYNC-0003", minutes=10).model_copy(update={"status": "failed"}))
+    assert store.last_successful_sync().id == "SYNC-0002"
+
+
 def test_migrates_a_version_1_database_without_losing_data(tmp_path):
     """The first real migration: a Day 2 database gains the investigations table."""
     from sentinel.store.sqlite import MIGRATIONS

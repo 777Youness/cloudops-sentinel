@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     llm_timeout_seconds: float = 60.0
     llm_max_tokens: int = 1500
 
+    # AWS mode (Day 5, ADR 0018). Credentials come from the standard boto3 chain through
+    # this profile, which assumes the read-only role cloudops-sentinel-<env>-readonly.
+    # Never the Terraform operator profile, never access keys in .env.
+    aws_profile: str | None = "sentinel"
+    # The workload's access log (Terraform: aws_cloudwatch_log_group.access).
+    aws_log_group: str = "/cloudops-sentinel/dev/access"
+    # Logs Insights is billed per GB scanned: the query window is the sync window, and a
+    # query still running after this many seconds is stopped (StopQuery) and reported.
+    aws_logs_query_timeout_seconds: float = 30.0
+
     def resolved_db_path(self) -> str:
         return self.db_path or str(BACKEND_DIR / "data" / f"sentinel-{self.mode}.db")
 

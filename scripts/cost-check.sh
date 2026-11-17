@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # CloudOps Sentinel leftover check: lists anything in the account that could still bill.
 #
-#   AWS_PROFILE=sentinel-admin bash scripts/cost-check.sh          (from the repository root)
-#   AWS_PROFILE=sentinel-admin bash ../../scripts/cost-check.sh    (from infra/envs/dev)
+#   AWS_PROFILE=sentinel-terraform bash scripts/cost-check.sh          (from the repository root)
+#   AWS_PROFILE=sentinel-terraform bash ../../scripts/cost-check.sh    (from infra/envs/dev)
 #
 # READ-ONLY. Every AWS call below is a describe-, list- or get- operation; the test
 # backend/tests/test_infra_guardrails.py fails if any other operation appears. It changes

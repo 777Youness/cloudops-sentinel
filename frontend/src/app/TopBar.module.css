@@ -35,3 +35,7 @@
 .crit {
   color: var(--crit);
 }
+
+.warn {
+  color: var(--warn);
+}

@@ -2,18 +2,27 @@
 
     collect (TelemetrySource) -> evaluate (detection engine) -> persist (Store) -> SyncRun
 
-A failing collector does not crash the sync: it is recorded as a failed CollectorStatus and
-the SyncRun reports status "failed" (or "partial" once several collectors exist).
+A source that cannot collect anything does not crash the sync: it is recorded as a failed
+CollectorStatus and the SyncRun reports status "failed". A source made of several parts
+(AWS) reports each part; if one failed or degraded, the SyncRun is "partial" and the
+signals of the failed part are simply absent from the snapshot, so detection treats them
+as missing data (never as healthy, never as 0).
 """
 
 import threading
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from sentinel.clock import Clock
-from sentinel.collectors.base import TelemetrySource
+from sentinel.collectors.base import CollectionError, TelemetrySource
 from sentinel.detection import engine
 from sentinel.domain.errors import SyncInProgressError
-from sentinel.domain.system import CollectorError, CollectorStatus, SyncRun
+from sentinel.domain.system import (
+    CollectorError,
+    CollectorName,
+    CollectorStatus,
+    SyncRun,
+    SyncStatus,
+)
 from sentinel.store.base import Store
 
 
@@ -26,7 +35,8 @@ class SyncService:
         self._clock = clock
         self._window = window
         self._lock = threading.Lock()
-        self._last_success_at = None
+        # When each collector last delivered data (shown on the System page).
+        self._last_success_at: dict[CollectorName, datetime] = {}
 
     def run(self) -> SyncRun:
         # Non-blocking: a second sync while one is running is rejected, not queued.
@@ -39,34 +49,57 @@ class SyncService:
         finally:
             self._lock.release()
 
+    def _failed_run(self, started, collector: CollectorName, error: CollectorError) -> SyncRun:
+        run = SyncRun(
+            id=self._store.next_sync_id(),
+            started_at=started,
+            finished_at=self._clock.now(),
+            status="failed",
+            collectors=[
+                CollectorStatus(
+                    name=collector,
+                    state="failed",
+                    last_success_at=self._last_success_at.get(collector),
+                    error=error,
+                )
+            ],
+            resources_evaluated=0,
+            rules_evaluated=0,
+            incidents_opened=0,
+            incidents_updated=0,
+            incidents_resolved=0,
+        )
+        self._store.record_sync(run)
+        return run
+
+    def _statuses(self, reported: list[CollectorStatus]) -> list[CollectorStatus]:
+        """The source's own report, or one "ok" for single-part sources, with the time
+        each collector last delivered data."""
+        now = self._clock.now()
+        reported = reported or [CollectorStatus(name=self._source.name, state="ok")]
+        statuses = []
+        for status in reported:
+            if status.state in ("ok", "degraded"):
+                self._last_success_at[status.name] = now
+            statuses.append(
+                status.model_copy(
+                    update={"last_success_at": self._last_success_at.get(status.name)}
+                )
+            )
+        return statuses
+
     def _run_locked(self) -> SyncRun:
         started = self._clock.now()
         try:
             snapshot = self._source.collect(started - self._window, started)
-        except Exception as exc:  # any source failure becomes a reported status
-            run = SyncRun(
-                id=self._store.next_sync_id(),
-                started_at=started,
-                finished_at=self._clock.now(),
-                status="failed",
-                collectors=[
-                    CollectorStatus(
-                        name=self._source.name,
-                        state="failed",
-                        last_success_at=self._last_success_at,
-                        error=CollectorError(code=type(exc).__name__, message=str(exc)),
-                    )
-                ],
-                resources_evaluated=0,
-                rules_evaluated=0,
-                incidents_opened=0,
-                incidents_updated=0,
-                incidents_resolved=0,
-            )
-            self._store.record_sync(run)
-            return run
+        except CollectionError as exc:  # the source explained why (e.g. AccessDenied)
+            return self._failed_run(started, exc.collector, exc.error)
+        except Exception as exc:  # any other source failure becomes a reported status
+            error = CollectorError(code=type(exc).__name__, message=str(exc))
+            return self._failed_run(started, self._source.name, error)
 
-        self._last_success_at = self._clock.now()
+        statuses = self._statuses(snapshot.collector_statuses)
+        status: SyncStatus = "success" if all(s.state == "ok" for s in statuses) else "partial"
         # Evaluation and every write happen in one transaction: a sync is stored whole or
         # not at all, and no other request sees a half-applied sync.
         with self._store.transaction():
@@ -86,12 +119,8 @@ class SyncService:
                 id=self._store.next_sync_id(),
                 started_at=started,
                 finished_at=self._clock.now(),
-                status="success",
-                collectors=[
-                    CollectorStatus(
-                        name=self._source.name, state="ok", last_success_at=self._last_success_at
-                    )
-                ],
+                status=status,
+                collectors=statuses,
                 resources_evaluated=result.resources_evaluated,
                 rules_evaluated=result.rules_evaluated,
                 incidents_opened=len(result.opened),

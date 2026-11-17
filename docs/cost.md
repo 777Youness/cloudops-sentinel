@@ -5,9 +5,9 @@ AWS Price List bulk files for eu-west-3 (`pricing.us-east-1.amazonaws.com/offers
 <service>/<version>/eu-west-3/index.json`), read on 2026-11-01, with the file's publication
 date. Anything not found there is marked **unverified**.
 
-Status: Day 4b (2026-11-01). **No AWS resource exists yet**: the Terraform in
-`infra/envs/dev` has never been applied. Update this page in the same change as any
-billable resource (CLAUDE.md).
+Status: Day 5 (2026-11-17). The workload was applied once by the owner and destroyed
+(empty state afterwards); nothing is running now. The actual bill for that run has not been
+recorded here. Update this page in the same change as any billable resource (CLAUDE.md).
 
 ## Prices (eu-west-3, USD)
 
@@ -105,7 +105,13 @@ Sources: [terminate](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/termina
 - **One custom metric** (limit 5), InstanceId only; **3-day log retention**; the instance
   role cannot create log groups.
 - **Sentinel's paid reads** (Logs Insights, `GetMetricData`) happen only during a sync, over
-  a bounded window (default 3 hours). Never on page loads.
+  a bounded window (default 3 hours). Never on page loads (ADR 0018). Per sync, with one
+  instance: `GetMetricData` asks for 4 metrics (about $0.00004 at $0.01 per 1,000); two Logs
+  Insights queries scan the access log of the last 3 hours (a few MB at most for demo
+  traffic; $0.0059 per GB), each limited to 1,000 rows and stopped after 30 s. No calls
+  when no instance is monitored. These are estimates from verified unit prices, not a bill.
+- **Sentinel's IAM role** is believed free (IAM was not price-checked, see the table) and is
+  not created yet: it is in Terraform, not applied.
 
 ## How prices were checked (2026-11-01)
 The Price List bulk files above were downloaded (public files, no AWS account involved) and

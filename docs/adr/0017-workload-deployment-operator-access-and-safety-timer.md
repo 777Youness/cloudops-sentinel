@@ -29,7 +29,8 @@ alarm. Three facts changed since ADR 0016:
 - Terraform's AWS provider is built on the AWS SDK for Go v2, which the
   [SDK compatibility table](https://docs.aws.amazon.com/sdkref/latest/guide/feature-login-credentials.html)
   lists as not supporting this credential type, and the provider changelog has no entry for
-  it. So Terraform uses a second profile, `sentinel-admin`, with
+  it. So Terraform uses a second profile, `sentinel-terraform` (named `sentinel-admin` in the
+  first draft of this ADR), with
   `credential_process = aws configure export-credentials --profile sentinel-login --format process`,
   the bridge AWS documents for tools without native support. Nobody runs
   `export-credentials` by hand (it would print credentials).

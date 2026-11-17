@@ -10,11 +10,14 @@ Details live in the ADRs (`docs/adr/`), the code and the tests: this guide links
 | Label | Meaning |
 |---|---|
 | LOCAL | Implemented and tested locally (and in CI) |
-| WRITTEN | Implemented but never deployed or run against AWS |
+| WRITTEN | Implemented (possibly tested with mocked AWS) but never run against AWS |
 | AWS-VALIDATED | Observed working in a real AWS account |
 | PLANNED | Designed or scheduled, not implemented |
 
-Current state (2026-11-08): nothing is AWS-VALIDATED yet. No AWS resource has ever existed.
+Current state (2026-11-17), as reported by the owner: the workload Terraform was applied once
+(17 resources, the app answered 200 on `/health`) and destroyed to an empty state. That is
+the only AWS-VALIDATED fact. The safety timer, the CloudWatch agent's output and the
+Sentinel AWS collector have **not** been observed on AWS yet.
 
 ---
 
@@ -56,16 +59,16 @@ flowchart LR
   subgraph Local["Your machine (Sentinel runs here, ADR 0001)"]
     UI["React console<br/>(Vite, 127.0.0.1:5173)"] -->|/api/v1, same origin| API["FastAPI<br/>127.0.0.1:8000"]
     API --> SVC["services/<br/>sync, incidents, investigation"]
-    SVC --> COL["collectors/<br/>simulated (LOCAL)<br/>aws (PLANNED)"]
+    SVC --> COL["collectors/<br/>simulated (LOCAL)<br/>aws (WRITTEN, mocked tests)"]
     SVC --> DET["detection/<br/>rules, engine, severity<br/>(pure)"]
     SVC --> INV["investigation/<br/>bundle, prompt, validator<br/>(pure)"]
     INV --> LLM["providers/<br/>mock (default) or<br/>OpenAI-compatible"]
     SVC --> DB[("SQLite<br/>one file per mode")]
   end
-  subgraph AWS["AWS eu-west-3 (WRITTEN, never applied)"]
+  subgraph AWS["AWS eu-west-3 (applied once, destroyed)"]
     EC2["t3.micro workload<br/>app + CloudWatch agent"] --> CW["CloudWatch<br/>metrics + logs + alarm"]
   end
-  COL -.->|"Day 5: read-only role"| CW
+  COL -.->|"sync only: assume read-only role"| CW
   OP["You (operator)<br/>Terraform, aws login"] -.->|operator policy| AWS
 ```
 
@@ -75,18 +78,19 @@ flowchart LR
 | `backend/sentinel/api/` | HTTP routes only; errors as one envelope | LOCAL |
 | `services/` | Orchestration: sync (writes), reads, investigation | LOCAL |
 | `collectors/simulated.py` | Replays YAML scenarios relative to "now" | LOCAL |
-| `collectors/aws/` | boto3 collectors through the read-only role | PLANNED (Day 5) |
+| `collectors/aws/` | Discovery, `GetMetricData`, Logs Insights, error translation (ADR 0018) | WRITTEN (Stubber tests) |
 | `detection/` | Rules, lifecycle, severity matrix, health. No I/O | LOCAL |
 | `investigation/` | Evidence bundle, prompt, validator; providers are the only LLM HTTP | LOCAL (real LLM run never recorded) |
 | `store/sqlite.py` | JSON documents in SQLite, migrations, one transaction per sync | LOCAL |
-| `infra/envs/dev/` | VPC, public subnet, t3.micro, IAM role, log group, alarm (17 resources) | WRITTEN |
-| `workload/app.py` | Demo HTTP app writing a JSON access log | LOCAL (never run on EC2) |
-| `infra/policies/` | Operator policy, Sentinel read-only policy | LOCAL as files, never attached |
+| `infra/envs/dev/` | VPC, public subnet, t3.micro, IAM roles, log group, alarm (19 resources) | 17 applied once (owner); the read-only role (2) WRITTEN |
+| `workload/app.py` | Demo HTTP app writing a JSON access log | LOCAL; `/health` answered on EC2 once (owner) |
+| `infra/policies/` | Operator policy, assume-reader policy, Sentinel read-only policy | LOCAL as files; the operator policy was used for the one apply (owner) |
 
 **Trust boundaries**
 1. *Browser ↔ API:* no authentication; the API binds to 127.0.0.1 (documented limitation).
 2. *Sentinel ↔ LLM:* only the evidence bundle leaves; the reply is untrusted until validated.
-3. *Sentinel ↔ AWS (PLANNED):* a read-only role with an explicit Deny on every write.
+3. *Sentinel ↔ AWS (WRITTEN):* the backend assumes a read-only role (explicit Deny on every
+   write); only the sync calls AWS.
 4. *Operator ↔ AWS:* a scoped IAM user, short-lived credentials, no access keys.
 5. *Telemetry content:* log lines are data, never instructions (prompt-injection boundary).
 
@@ -126,23 +130,31 @@ Docs: `docs/detection-rules.md`. Tests: `tests/unit/test_rule_*.py`, `test_lifec
 5. Saved separately; `outdated` when the incident's evidence hash changes.
 Code: `investigation/`, `services/investigation.py`. ADR 0015.
 
-### C4. Provisioning and telemetry (WRITTEN, never applied)
+### C4. Provisioning and telemetry (applied once by the owner; agent output not yet observed)
 1. You sign in with `aws login`; Terraform uses a `credential_process` bridge profile.
 2. Terraform creates the network, the instance role, the log group, the instance, the alarm.
 3. user_data arms the safety timer **first**, installs the CloudWatch agent, starts the app.
 4. The agent publishes `mem_used_percent` (one metric, `InstanceId` only) and ships the
    access log; EC2 publishes CPU, credits and status checks itself (basic monitoring).
-5. Day 5 (PLANNED): Sentinel's sync reads these through the read-only role.
+5. Sentinel's sync reads these through the read-only role (C7).
 Docs: `infra/README.md`, ADR 0016, ADR 0017.
 
-### C5. IAM protection (LOCAL as tested files; never attached in AWS)
-Three identities, three policies, never mixed (ADR 0017):
+### C5. IAM protection (tested files; operator policy used once, Sentinel role not applied)
+Three identities, three policies, never mixed (ADR 0017, ADR 0018):
 
 | Identity | Can | Cannot |
 |---|---|---|
 | Operator user | Build exactly this workload: t3.micro, IMDSv2, encrypted gp3, Amazon AMI | Create users, access keys, Organizations, Identity Center, EIPs, NAT, endpoints |
 | Instance role | Write its own log group; publish metrics in `CWAgent` | Create log groups, anything else |
-| Sentinel role (PLANNED) | Nine read actions, region-pinned | Any write (explicit Deny) |
+| Sentinel role (WRITTEN) | Ten read actions, region-pinned; assumed only by the user named in `sentinel_reader_arn` | Any write (explicit Deny) |
+
+**Operator vs Sentinel.** Both start from your one sign-in, but they are different identities.
+Terraform uses `sentinel-terraform` (your user: it can build and delete the workload). The
+backend uses `sentinel`, which calls `sts:AssumeRole` and then works with the role's
+temporary credentials, so every AWS call Sentinel makes is limited to reading telemetry. If
+the backend had a bug that tried to stop an instance, IAM would deny it: the safety is in
+the identity, not in the code. Your user needs one extra small policy to assume the role
+(`operator-assume-sentinel.json`), kept apart from the Terraform policy.
 
 Two mechanisms do the work: **conditions** (`ec2:InstanceType`, `iam:PassedToService`,
 `kms:ViaService`, `aws:ResourceTag/Project`) let AWS itself refuse the wrong request, and an
@@ -166,6 +178,50 @@ policy grows again, split it into two managed policies. A test now fails above 6
 - Budget must exclude credits, or it can stay silent while credits pay (`IncludeCredit`
   defaults to true).
 - Verified Paris prices: about $0.018 per running hour (`docs/cost.md`).
+
+### C7. AWS telemetry collection (WRITTEN; tested with mocked AWS only)
+```mermaid
+sequenceDiagram
+  participant UI as Console
+  participant Sync as SyncService
+  participant Src as AwsSource
+  participant AWS as AWS (read-only role)
+  participant Det as detection engine
+  participant DB as SQLite (sentinel-aws.db)
+  UI->>Sync: POST /api/v1/sync
+  Sync->>Src: collect(now - 3 h, now)
+  Src->>AWS: DescribeInstances (tag monitor=true)
+  Src->>AWS: GetMetricData (CPU, credits, status, memory)
+  Src->>AWS: StartQuery x2, GetQueryResults (access log)
+  Src-->>Sync: ObservationSnapshot + collector_statuses
+  Sync->>Det: evaluate(snapshot, open incidents)
+  Det-->>Sync: opened / updated / resolved
+  Sync->>DB: one transaction
+  Sync-->>UI: SyncRun (success / partial / failed)
+```
+1. **Polling, on demand.** Nothing is collected until you click Sync now (ADR 0003); every
+   page reads SQLite. Freshness is the price; cost and failures stay in one place.
+2. **Discovery** by tag `cloudops-sentinel:monitor=true`: Sentinel monitors what you
+   labelled, not everything in the account.
+3. **Metrics** in one batched `GetMetricData`: EC2 basic monitoring (CPU and credits every
+   5 minutes, status checks at 1 minute, to be confirmed) and the agent's memory metric.
+   Only complete periods are kept (a point at T covers [T, T + period)).
+4. **Log signals**: two Logs Insights queries per sync turn the JSON access log into
+   requests per minute, 5xx % and p95 latency per instance (the log stream is the instance
+   id). A minute with no line is missing; a minute with requests and no 5xx is 0 %.
+5. **Same pipeline.** The snapshot looks exactly like a simulated one, so the same rules,
+   lifecycle and store produce the incident; only `data_origin` says `aws`.
+6. **Failures are data about the data.** Discovery fails: the sync fails and nothing is
+   evaluated. Metrics or logs fail: that collector is `failed`, its signals are missing,
+   the sync is `partial`; missing data opens `data_gap` facts and never resolves an
+   incident. The System page shows each collector's error code and hint.
+
+How AWS telemetry becomes an incident, concretely: CPUUtilization at 97% for the last four
+5-minute periods → `trailing_run` finds 20 minutes ≥ 90% → R-CPU-SAT triggers → the engine
+opens one incident for the instance with fact `F1` (template text, window, peak), severity
+`medium` from the matrix, and `data_gap` facts for memory and traffic if those were missing
+(`tests/aws/test_aws_sync.py`, first test). Code: `collectors/aws/`, `services/sync.py`.
+ADR 0018.
 
 ---
 
@@ -224,6 +280,32 @@ and portability of the skill, which is a portfolio choice, not a technical neces
 the local state file is a single point of failure. Switch to an S3 backend with locking
 (`use_lockfile`) for CI or a second operator; CloudFormation is a fair choice for AWS-only teams.
 
+**D8. Pull with boto3 from CloudWatch, on sync (ADR 0018).**
+Problem: get real telemetry into the existing pipeline without new infrastructure. Choice:
+the official SDK (boto3), pulling from CloudWatch Metrics and Logs only when a sync runs.
+Alternatives: the AWS CLI from Python (stringly typed, harder to test), push via alarms →
+SNS → webhook (needs a public endpoint and SNS, out of scope), Prometheus exporters (an
+extra server), a scheduler (auto-sync is V4). Limits: data is as fresh as the last click;
+each sync costs a little (`GetMetricData`, Logs Insights). Switch to scheduled collection
+or a push pipeline when someone must be paged at night.
+
+**D9. Logs Insights for request rate, 5xx and latency.**
+Problem: the app's traffic signals are not EC2 metrics. Choice: aggregate the JSON access log
+at query time. Alternatives: metric filters or the Embedded Metric Format (each produces
+custom metrics, billed per metric, against the 5-metric budget), an ALB's metrics (an ALB is
+forbidden). Limits: per-GB scanning cost, query latency, and a dependency on field names
+(`@logStream`, `bin(1m)`) still to verify on AWS. Switch to EMF metrics when traffic and
+query volume make scanning more expensive than a few custom metrics.
+
+**D10. A role assumed by the backend instead of reusing the operator profile.**
+Problem: the backend needs AWS access, and the operator's identity can delete
+infrastructure. Choice: `cloudops-sentinel-dev-readonly`, trusted by one named principal,
+assumed through the `sentinel` profile. Alternatives: the operator profile (far too
+powerful), a dedicated IAM user with access keys (a long-lived secret on disk), trusting the
+account root (any principal allowed to call `sts:AssumeRole` could use it). Limits: the
+backend still depends on your sign-in being valid (12 hours at most). Switch to an instance
+or task role if Sentinel is ever hosted on AWS (no human credentials at all).
+
 ---
 
 ## E. Concepts to master (as they appear here)
@@ -241,6 +323,12 @@ the local state file is a single point of failure. Switch to an S3 backend with 
 - **Grounding and reject-don't-repair** (`investigation/validator.py`).
 - **Fail-safe ordering**: arm the timer before anything can fail (`user_data.sh.tftpl`).
 - **Tests that prove themselves**: mutation testing of policies and guardrails.
+- **Assume-role chains**: `role_arn` + `source_profile`; after `sts:AssumeRole` the caller is
+  the role (`aws sts get-caller-identity --profile sentinel`).
+- **Partial failure**: report per part (`collector_statuses`), degrade honestly, never turn
+  "could not read" into "looks fine" (`collectors/aws/source.py`).
+- **Testing AWS code without AWS**: botocore `Stubber` refuses unexpected calls; unsigned
+  clients never look for credentials (`tests/aws/conftest.py`).
 
 ---
 
@@ -285,6 +373,33 @@ only the `Sid`s, because IAM ignores them when evaluating requests, then proved 
 field was identical, and added a test that fails above 6,000. I did not widen actions to
 wildcards to save space: that trades a size problem for a security problem.
 *Follow-up:* and if it still did not fit? Split it into two managed policies.
+
+**Q: Walk me through how real AWS data becomes an incident in your system.**
+Click Sync → the backend assumes the read-only role → finds tagged instances → one
+`GetMetricData` and two bounded Logs Insights queries → a snapshot identical in shape to the
+simulator's → the same rules (trailing runs, guards, severity matrix) → one SQLite
+transaction. Be precise about status: this path is tested with mocked AWS responses; it has
+not yet run against the real account.
+*Follow-ups:* Why not stream metrics? (One user, manual review, cost in one place; push needs
+public endpoints.) What if CloudWatch throttles you? (botocore standard retries, then the
+collector is `failed`, the sync `partial`, data gaps instead of fake health.) What if the
+agent stops shipping logs? (The traffic signals go missing, R-5XX and R-LAT report
+`insufficient_data`; nothing resolves.)
+
+**Q: Why does Sentinel use a different identity from Terraform?**
+Least privilege per job. Terraform must create and delete; Sentinel must only read. With one
+shared identity, any backend bug would have infrastructure-changing power. With the role,
+IAM itself refuses writes, and the policy is pinned by a test that also checks the code
+calls only approved actions.
+*Follow-up:* the role is assumed with your credentials, so is it really separate? (The
+session has only the role's permissions; your user's do not carry over. The trust policy
+names one principal; the assume permission is a separate one-action policy.)
+
+**Q: How would this collection design scale to 100 instances or several accounts?**
+`GetMetricData` takes up to 500 queries per call, so 100 instances × 4 metrics is one call;
+Logs Insights already groups by log stream. Across accounts: one read-only role per account
+(cross-account trust), collection in parallel, scheduled syncs. Current limits: one SQLite
+connection and a manual sync.
 
 **Q: What did you personally learn?**
 Answer honestly and specifically, for example: that a browser review found bugs the unit

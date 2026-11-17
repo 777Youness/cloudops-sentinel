@@ -34,6 +34,14 @@ function SyncStatus() {
       </Link>
     );
   }
+  if (last.status === 'partial') {
+    // Some sources failed: their signals are missing, so this is not a clean sync.
+    return (
+      <Link to="/system" className={`${styles.status} ${styles.warn}`}>
+        Last sync partial {formatRelative(last.finished_at, now)}
+      </Link>
+    );
+  }
   return (
     <span className={styles.status} title={formatUtcFull(last.finished_at)}>
       Synced {formatRelative(last.finished_at, now)}

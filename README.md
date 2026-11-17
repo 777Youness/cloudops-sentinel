@@ -6,10 +6,11 @@ Sentinel collects operational telemetry, detects incidents with deterministic ru
 asks an LLM (on demand) to write an investigation in which every hypothesis must cite facts
 the code collected. Severity is rule-based. Humans decide on remediation.
 
-> **Status: V1 in progress — Day 4b (AWS workload infrastructure).** Only simulated data
-> exists so far. The Terraform for the workload is prepared but defines no resources yet,
-> and nothing has been deployed to AWS. AWS mode and the Resources pages are not built yet.
-> See [docs/architecture.md](docs/architecture.md) for the milestone plan.
+> **Status: V1 in progress — Day 5 (AWS mode).** The AWS collector is implemented and
+> tested with mocked AWS responses; it has **not yet run against a real account**. The
+> workload Terraform was applied once by the owner (17 resources, `/health` answered 200,
+> `terraform destroy` left an empty state); the EC2 safety timer is **not yet validated**.
+> The Resources pages are not built yet. See [docs/architecture.md](docs/architecture.md).
 
 ## What works today
 
@@ -38,6 +39,24 @@ the code collected. Severity is rule-based. Humans decide on remediation.
     deployment markers, visible gaps), a timeline linked to facts, and the stored facts
     grouped as observed, checked and normal, and data gaps.
   - Incidents and System pages; a persistent simulated-data strip; a stale-data notice.
+- **AWS mode** (`SENTINEL_MODE=aws`, [ADR 0018](docs/adr/0018-aws-telemetry-collector.md)),
+  tested with mocked AWS only: the sync discovers instances tagged
+  `cloudops-sentinel:monitor=true`, reads CPU, CPU credits, status checks and memory with one
+  `GetMetricData` call, and derives request rate, 5xx rate and p95 latency from the workload
+  access log with two bounded Logs Insights queries, through a read-only role. Failed or
+  partial collection is reported per collector (sync `failed` or `partial`), never treated
+  as healthy data. Same detection, lifecycle and storage as simulated mode.
+
+## AWS mode (requires the deployed workload and the read-only role)
+
+```bash
+cd backend
+SENTINEL_MODE=aws SENTINEL_AWS_PROFILE=sentinel uv run uvicorn sentinel.main:app --host 127.0.0.1 --port 8000
+```
+
+Profiles, the role and the one-time setup are in [infra/README.md](infra/README.md).
+Credentials always come from the profile (the `sentinel` profile assumes the read-only
+role); nothing is stored in `.env`.
 
 ## Run locally
 
@@ -80,7 +99,7 @@ CLAUDE.md   rules for AI-assisted development in this repository
 See [docs/adr](docs/adr). Key ones: Sentinel runs locally for V1 (0001), a pure detection
 core with enforced import rules (0002), only the sync collects data (0003), rule-based
 severity (0004), generated API types (0010), SQLite document store (0013), investigation
-provider (0015).
+provider (0015), AWS collector (0018).
 
 ## Acknowledgements
 
