@@ -51,6 +51,7 @@ resource "aws_instance" "workload" {
     safety_timer_minutes = var.safety_timer_minutes
     app_port             = var.app_port
     access_log_path      = local.access_log_path
+    faults_enabled       = var.fault_injection_enabled ? "1" : "0"
     app_py               = file("${path.module}/../../../workload/app.py")
     agent_config = templatefile("${path.module}/templates/cloudwatch-agent.json.tftpl", {
       log_group_name  = aws_cloudwatch_log_group.access.name

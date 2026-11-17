@@ -14,10 +14,11 @@ Details live in the ADRs (`docs/adr/`), the code and the tests: this guide links
 | AWS-VALIDATED | Observed working in a real AWS account |
 | PLANNED | Designed or scheduled, not implemented |
 
-Current state (2026-11-17), as reported by the owner: the workload Terraform was applied once
-(17 resources, the app answered 200 on `/health`) and destroyed to an empty state. That is
-the only AWS-VALIDATED fact. The safety timer, the CloudWatch agent's output and the
-Sentinel AWS collector have **not** been observed on AWS yet.
+Current state (2026-11-17), as reported by the owner. AWS-VALIDATED: the full Terraform
+(19 resources) applied and destroyed to an empty state; the app answered 200; Sentinel
+assumed its read-only role; the ec2, cloudwatch_metrics and cloudwatch_logs collectors all
+succeeded with 7/7 signals; no incident on the healthy workload. NOT yet observed on AWS:
+an incident from real data (the 5xx demo, C8), the safety timer.
 
 ---
 
@@ -78,12 +79,12 @@ flowchart LR
 | `backend/sentinel/api/` | HTTP routes only; errors as one envelope | LOCAL |
 | `services/` | Orchestration: sync (writes), reads, investigation | LOCAL |
 | `collectors/simulated.py` | Replays YAML scenarios relative to "now" | LOCAL |
-| `collectors/aws/` | Discovery, `GetMetricData`, Logs Insights, error translation (ADR 0018) | WRITTEN (Stubber tests) |
+| `collectors/aws/` | Discovery, `GetMetricData`, Logs Insights, error translation (ADR 0018) | AWS-VALIDATED once (healthy run, owner) |
 | `detection/` | Rules, lifecycle, severity matrix, health. No I/O | LOCAL |
 | `investigation/` | Evidence bundle, prompt, validator; providers are the only LLM HTTP | LOCAL (real LLM run never recorded) |
 | `store/sqlite.py` | JSON documents in SQLite, migrations, one transaction per sync | LOCAL |
-| `infra/envs/dev/` | VPC, public subnet, t3.micro, IAM roles, log group, alarm (19 resources) | 17 applied once (owner); the read-only role (2) WRITTEN |
-| `workload/app.py` | Demo HTTP app writing a JSON access log | LOCAL; `/health` answered on EC2 once (owner) |
+| `infra/envs/dev/` | VPC, public subnet, t3.micro, IAM roles, log group, alarm (19 resources) | AWS-VALIDATED (applied and destroyed, owner); safety timer UNTESTED |
+| `workload/app.py` | Demo HTTP app writing a JSON access log; dev-only `/fault/500` (ADR 0019) | App AWS-VALIDATED (owner); fault route LOCAL |
 | `infra/policies/` | Operator policy, assume-reader policy, Sentinel read-only policy | LOCAL as files; the operator policy was used for the one apply (owner) |
 
 **Trust boundaries**
@@ -179,7 +180,7 @@ policy grows again, split it into two managed policies. A test now fails above 6
   defaults to true).
 - Verified Paris prices: about $0.018 per running hour (`docs/cost.md`).
 
-### C7. AWS telemetry collection (WRITTEN; tested with mocked AWS only)
+### C7. AWS telemetry collection (AWS-VALIDATED once on a healthy workload)
 ```mermaid
 sequenceDiagram
   participant UI as Console
@@ -223,6 +224,28 @@ opens one incident for the instance with fact `F1` (template text, window, peak)
 (`tests/aws/test_aws_sync.py`, first test). Code: `collectors/aws/`, `services/sync.py`.
 ADR 0018.
 
+### C8. From one HTTP 500 to an incident (LOCAL; the AWS run is the next step)
+The demo (ADR 0019, `infra/README.md` section 8) uses the real rule, unchanged:
+1. **The request.** `scripts/demo_traffic.py` sends 1 request per second; every 5th goes
+   to `GET /fault/500`, a fixed route that answers 500 (only when the dev workload sets
+   `WORKLOAD_FAULTS_ENABLED=1`; otherwise 404).
+2. **The log line.** The app writes `{"time","method","path","status":500,"duration_ms"}`
+   before it answers, so every answered request is logged.
+3. **CloudWatch Logs.** The agent tails the file and ships each line to
+   `/cloudops-sentinel/dev/access`, stream = instance id.
+4. **The signal.** At sync, Logs Insights counts requests and `status >= 500` per instance
+   and per minute; `error_rate_5xx = 100 × errors / requests` = 12 / 60 = 20 %. Minutes
+   without lines are missing; the newest 3 minutes are left out (in progress + ingestion).
+5. **The decision.** R-5XX takes the trailing run of minutes at ≥ 2 %: it must last 5
+   minutes (no gap) and contain ≥ 50 requests (here 300). Because ≥ 5 % also held for 5
+   minutes, `severity.py` maps it to **high**. The engine opens one incident with an
+   append-only fact ("5xx error rate at or above 5% for 6 min ... (peak 20.0%)"),
+   `within_normal` / `data_gap` facts for the other signals, and stores it in one
+   transaction. After 10 clean minutes of healthy traffic, it resolves.
+Tested end to end with mocked AWS in `tests/aws/test_demo_5xx_incident.py`, including the
+negative cases: 4 minutes is not enough, a missing minute breaks the run, and the same 20 %
+on 5 requests per minute does not alert.
+
 ---
 
 ## D. Decisions and trade-offs
@@ -237,6 +260,11 @@ detection or LLM-assigned severity, rejected because it is not reproducible or u
 and is out of scope ("Never: ML anomaly models"). Limits: fixed thresholds miss unknown
 failure modes and need tuning per service. Switch when you have many services with very
 different baselines and the labelled history to evaluate a model.
+*The demo makes this concrete:* the same 20 % error rate is high severity at 60 requests
+per minute and no incident at all at 5 per minute (below the 50-request guard). That
+judgement is a line of code with a test; an LLM asked "is this an incident?" could answer
+differently on two runs, and nobody could test why. The LLM's job starts after the
+decision: explaining the cited facts.
 
 **D2. Local console instead of a hosted service (ADR 0001).**
 Problem: credibility needs real AWS data; hosting needs compute, TLS and auth first. Choice:
@@ -305,6 +333,16 @@ powerful), a dedicated IAM user with access keys (a long-lived secret on disk), 
 account root (any principal allowed to call `sts:AssumeRole` could use it). Limits: the
 backend still depends on your sign-in being valid (12 hours at most). Switch to an instance
 or task role if Sentinel is ever hosted on AWS (no human credentials at all).
+
+
+**D11. A dev-only HTTP fault route instead of lowering thresholds or SSM scripts (ADR 0019).**
+Problem: show a real incident cheaply and repeatably. Choice: a fixed `/fault/500` route,
+off unless the dev workload enables it, plus controlled traffic. Alternatives: lower the
+thresholds (proves nothing), SSM scripts (more permissions and moving parts for the same
+500s), stopping the app (produces missing data, which correctly never becomes an error
+rate). Limits: it demonstrates one rule; a fault route is code that must never ship to a
+real service. Switch to SSM-run chaos scripts or AWS Fault Injection Service for CPU,
+memory or status-check incidents.
 
 ---
 
@@ -400,6 +438,22 @@ names one principal; the assume permission is a separate one-action policy.)
 Logs Insights already groups by log stream. Across accounts: one read-only role per account
 (cross-account trust), collection in parallel, scheduled syncs. Current limits: one SQLite
 connection and a manual sync.
+
+**Q: How do you know your incident demo is not rigged?**
+The thresholds are the production ones and a test pins the demo script to them; the demo
+only creates the condition the rule describes (≥ 5 % errors for 5 minutes on enough
+traffic). The negative tests matter as much: too short, a gap, or too little traffic must
+not alert. The fault itself is a real HTTP 500 that travels the real log pipeline.
+*Follow-ups:* Isn't a fault endpoint a security risk? (Fixed response, no input, no
+command, off by default, dev-only by Terraform validation, reachable only from one /32.)
+Why sync at minute 9 and not 5? (5 complete minutes + the running minute + 2 minutes of
+ingestion delay.) What if it stays medium, not high? (≥ 5 % did not last 5 minutes.)
+
+**Q: Why does the incident not resolve as soon as the errors stop?**
+Two reasons, both deliberate. Resolution needs 10 clean minutes (hysteresis against
+flapping). And clean means data present and below 2 %: if traffic simply stops, the minutes
+are missing, and missing data never resolves an incident. That is why the demo has a
+`healthy` phase.
 
 **Q: What did you personally learn?**
 Answer honestly and specifically, for example: that a browser review found bugs the unit

@@ -132,3 +132,43 @@ def test_the_app_uses_only_the_standard_library():
         elif isinstance(node, ast.ImportFrom) and node.module:
             roots.add(node.module.split(".")[0])
     assert roots - {"__future__"} <= set(sys.stdlib_module_names), roots
+
+
+# --- Fault injection (Day 5b, ADR 0019) -----------------------------------------------------
+
+
+def test_fault_route_is_disabled_by_default_and_is_a_plain_404(serve):
+    base, log_path = serve()  # the default route: faults disabled
+    assert _get(base + "/fault/500")[0] == 404
+    assert _log_lines(log_path)[0]["status"] == 404
+
+
+def test_enabled_fault_route_answers_500_and_is_logged_like_any_request(serve):
+    base, log_path = serve(route=app.make_route(True))
+    assert _get(base + "/fault/500") == (500, "injected fault (demo)\n")
+    assert _get(base + "/")[0] == 200
+    lines = _log_lines(log_path)
+    assert [(line["path"], line["status"]) for line in lines] == [("/fault/500", 500), ("/", 200)]
+    assert set(lines[0]) == {"time", "method", "path", "status", "duration_ms"}
+
+
+def test_fault_route_takes_no_input():
+    # Query strings, extra segments and other methods never reach a fault or any code path.
+    assert app.handle("/fault/500", faults_enabled=True) == (500, "injected fault (demo)\n")
+    assert app.handle("/fault/500/", faults_enabled=True)[0] == 404
+    assert app.handle("/fault/503", faults_enabled=True)[0] == 404
+    assert app.handle("/fault", faults_enabled=True)[0] == 404
+
+
+def test_only_exactly_1_enables_faults():
+    assert app.faults_enabled_from_env({"WORKLOAD_FAULTS_ENABLED": "1"}) is True
+    for value in ("", "0", "true", "yes", " 1", "1 "):
+        assert app.faults_enabled_from_env({"WORKLOAD_FAULTS_ENABLED": value}) is False
+    assert app.faults_enabled_from_env({}) is False
+
+
+def test_query_string_on_the_fault_route_is_ignored_and_not_logged(serve):
+    base, log_path = serve(route=app.make_route(True))
+    assert _get(base + "/fault/500?cmd=rm+-rf")[0] == 500
+    text = log_path.read_text(encoding="utf-8")
+    assert "cmd" not in text and "rm" not in text

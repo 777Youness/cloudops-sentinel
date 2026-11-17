@@ -345,6 +345,7 @@ def _rendered_user_data() -> str:
         {
             "safety_timer_minutes": "240",
             "app_port": "8080",
+            "faults_enabled": "1",
             "access_log_path": "/var/log/cloudops-workload/access.log",
             "app_py": APP.read_text(encoding="utf-8"),
             "agent_config": json.dumps(_rendered_agent_config(), indent=2),
@@ -363,10 +364,21 @@ def test_user_data_template_uses_exactly_the_variables_compute_tf_passes():
             "safety_timer_minutes",
             "app_port",
             "access_log_path",
+            "faults_enabled",
             "app_py",
             "agent_config",
         }
     )
+
+
+def test_fault_injection_is_dev_only_and_explicit():
+    variable = _block(_tf("variables.tf"), 'variable "fault_injection_enabled"')
+    assert 'var.environment == "dev"' in variable
+    assert _setting(variable, "type") == "bool"
+    call = _block(_tf("compute.tf"), "user_data = templatefile(")
+    assert _setting(call, "faults_enabled") == 'var.fault_injection_enabled ? "1" : "0"'
+    # The app enables faults only on exactly "1" (workload/app.py, faults_enabled_from_env).
+    assert "Environment=WORKLOAD_FAULTS_ENABLED=${faults_enabled}" in _user_data_template()
 
 
 def test_safety_timer_is_installed_before_anything_that_can_fail():

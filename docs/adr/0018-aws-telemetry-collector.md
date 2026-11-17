@@ -1,7 +1,9 @@
 # ADR 0018 — AWS telemetry collector: polling on sync, boto3, explicit partial failures
 
 - Status: accepted (Day 5). Implemented and tested with mocked AWS (botocore Stubber).
-  **Not yet run against a real AWS account**; see "Verification".
+  **Run once against the real account by the owner (2026-11-17)**: the role was assumed,
+  ec2, cloudwatch_metrics and cloudwatch_logs were all `ok`, 7/7 signals, 1 resource, 7
+  rules, no incident (healthy workload). See "Verification" for what that run settled.
 - Date: 2026-11-17
 
 ## Context
@@ -87,7 +89,13 @@ Deployment events from `ssm:ListCommands` (no deploy scripts exist yet: Day 4c),
 states (`cloudwatch:DescribeAlarms`), log samples (`logs:FilterLogEvents`) and the Resources
 pages. The policy already allows the first three reads.
 
-## Verification (not yet done, needs AWS)
+## Verification
+**Settled by the owner's run (2026-11-17):** items 1, 2 and 3 below, and, because the
+logs collector returned all three log signals, the Logs Insights permissions (item 4) and
+field names (item 6) work as written. Still open: item 5 against real series, and item 7
+(an incident from real AWS data: ADR 0019 provides the 5xx demo).
+
+Original checklist:
 1. `terraform apply` creates 19 resources (17 + the role and its inline policy).
 2. `aws sts get-caller-identity --profile sentinel` returns the assumed role.
 3. A sync in aws mode returns `success` with three `ok` collectors; the System page lists them.

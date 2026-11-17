@@ -88,3 +88,14 @@ variable "sentinel_reader_arn" {
     error_message = "sentinel_reader_arn must be one IAM user or role ARN (no wildcard, no account root)."
   }
 }
+
+variable "fault_injection_enabled" {
+  description = "Enable the workload's demo fault route GET /fault/500 (HTTP 500, ADR 0019). Only allowed in the dev environment; reachable only from operator_cidr."
+  type        = bool
+  default     = true
+
+  validation {
+    condition     = !var.fault_injection_enabled || var.environment == "dev"
+    error_message = "fault_injection_enabled may only be true when environment is \"dev\"."
+  }
+}

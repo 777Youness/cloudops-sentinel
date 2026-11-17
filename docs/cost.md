@@ -5,9 +5,10 @@ AWS Price List bulk files for eu-west-3 (`pricing.us-east-1.amazonaws.com/offers
 <service>/<version>/eu-west-3/index.json`), read on 2026-11-01, with the file's publication
 date. Anything not found there is marked **unverified**.
 
-Status: Day 5 (2026-11-17). The workload was applied once by the owner and destroyed
-(empty state afterwards); nothing is running now. The actual bill for that run has not been
-recorded here. Update this page in the same change as any billable resource (CLAUDE.md).
+Status: Day 5b (2026-11-17). The workload was applied and destroyed by the owner
+(the last run: 19 resources, empty state afterwards); nothing is running now. The actual
+bill for those runs has not been recorded here. The 5xx demo (infra/README.md section 8)
+adds about 60 log lines per minute while it runs (a few kB in total) and no resource. Update this page in the same change as any billable resource (CLAUDE.md).
 
 ## Prices (eu-west-3, USD)
 
