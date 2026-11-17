@@ -1,6 +1,6 @@
 """Templates for fact statements and labels. Consistent wording, testable, never LLM-written."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sentinel.detection import thresholds
 from sentinel.detection.rules import Clearance, RuleResult
@@ -28,7 +28,8 @@ TITLES: dict[str, str] = {
 
 
 def hhmm(t: datetime) -> str:
-    return t.strftime("%H:%M UTC")
+    # Convert, never just relabel: an aware time in another zone must not print as "UTC".
+    return t.astimezone(UTC).strftime("%H:%M UTC")
 
 
 def minutes(d: timedelta) -> int:

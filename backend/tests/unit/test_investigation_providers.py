@@ -11,7 +11,7 @@ import pytest
 from sentinel.collectors.simulated import SimulatedSource, load_scenarios
 from sentinel.config import Settings
 from sentinel.detection import engine
-from sentinel.investigation.bundle import build_bundle, fact_ids
+from sentinel.investigation.bundle import build_bundle, fact_index
 from sentinel.investigation.prompt import build_prompt
 from sentinel.investigation.providers.base import ProviderError
 from sentinel.investigation.providers.mock import MockProvider
@@ -39,7 +39,8 @@ def test_mock_output_passes_the_validator_for_every_scenario_incident(clock):
     assert incidents
     for incident in incidents:
         bundle = build_bundle(incident)
-        findings = validate_output(MockProvider().complete(build_prompt(bundle)), fact_ids(bundle))
+        reply = MockProvider().complete(build_prompt(bundle))
+        findings = validate_output(reply, fact_index(bundle))
         assert findings.hypotheses, incident.id
         assert "mock provider" in findings.limitations[0]
 

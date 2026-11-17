@@ -119,6 +119,8 @@ class AwsSource:
             data_origin="aws",
             resources=resources,
             series=series,
-            events=[],  # deployment events from ssm:ListCommands: next step (Day 4c/5b)
+            # Deployment events from ssm:ListCommands: next step (Day 4c/5b). When added, set
+            # DEPLOYMENT_EVENTS_COLLECTED["aws"] in investigation/bundle.py.
+            events=[],
             collector_statuses=statuses,
         )

@@ -122,14 +122,46 @@ Code: `services/sync.py`, `store/sqlite.py`.
 - Resolution needs 10 clean minutes (hysteresis); missing data never resolves.
 Docs: `docs/detection-rules.md`. Tests: `tests/unit/test_rule_*.py`, `test_lifecycle.py`.
 
-### C3. Investigation (LOCAL with the mock; real provider never run)
-1. Bundle = incident identity + facts + timeline (no raw series, text clipped to 300).
-2. Prompt puts the evidence between markers declared as data.
+### C3. Investigation (LOCAL with the mock; one real Groq run on INC-0001 with prompt v1)
+1. Bundle = incident identity + facts + timeline (no raw series, text clipped to 300) +
+   `evidence_scope`: what each fact kind means, and what Sentinel did not collect.
+2. Prompt (v2) puts the evidence between markers declared as data, with reasoning rules.
 3. Provider replies; the validator rejects (never repairs): not JSON, forbidden fields,
-   unknown or missing citations, commands, long text...
+   unknown or missing citations, commands, long text, unsupported "high" confidence...
 4. One retry with the reason; second rejection = `failed`, saved with its reason.
 5. Saved separately; `outdated` when the incident's evidence hash changes.
 Code: `investigation/`, `services/investigation.py`. ADR 0015.
+
+**Citations are not proof (lesson of INC-0001, 2026-11-17).** The first real run
+(`openai/gpt-oss-20b`, prompt v1) received F1 "credit balance at or below 5 (lowest 0.0)",
+F2 "5xx rate 21.1%" and F3 "CPU utilization 0.8%". It answered, at **high** confidence,
+"credit exhaustion caused throttling, leading to 5xx errors", and proposed scaling. Every
+check passed: valid JSON, real ids. A citation proves that a fact *exists*, not that it
+*supports* the sentence around it. Here, F3 even argued against it: throttling only limits
+CPU demand above the baseline, and demand was near zero. The two breaches only co-occurred.
+What changed, and what kind of guarantee each change gives:
+- *Input (deterministic):* `evidence_scope` tells the model that a within_normal fact
+  counts against an explanation, that a data gap is unknown, and that deployment events are
+  not collected in AWS mode (no event fact does not mean no change).
+- *Prompt (guidance only):* correlation is not causation, alternatives, confirm/refute
+  checks, conditional and proportional remediation, a definition of each confidence level.
+- *Validator (enforced, structural):* `confidence_unsupported` rejects "high" when the
+  hypothesis joins breaches of two or more rules (no fact kind records a causal link), or
+  rests on data gaps only. It reads ids, kinds and confidence, never wording: the same
+  sentence at "medium" passes. Overclaiming *wording* cannot be checked by code.
+- *Evaluation (measured by hand):* `backend/evals/investigation_reliability.py` runs cases
+  A-E against the configured model. Unit tests prove the rules, not the model's reasoning.
+
+**Severity is not confidence.** Severity is the rule matrix's judgement of *impact*
+(`detection/severity.py`): a 21% 5xx rate is high whatever the cause. Confidence is the
+model's judgement of *how well the evidence supports one explanation*. A high-severity
+incident can, and often should, have only low or medium confidence hypotheses.
+
+**Limits of LLM investigations.** The model sees only derived facts (no logs, traces,
+process data or configuration), so it can rank explanations but rarely establish one.
+It can still overclaim at "medium", or choose wording that sounds certain; the console
+marks every hypothesis "Inferred", and the human decides. Results differ between models
+and between runs of the same model.
 
 ### C4. Provisioning and telemetry (applied once by the owner; agent output not yet observed)
 1. You sign in with `aws login`; Terraform uses a `credential_process` bridge profile.
@@ -359,6 +391,11 @@ memory or status-check incidents.
 - **Hysteresis and append-only facts** (`detection/engine.py`).
 - **Transactions and atomicity** (`store/sqlite.py`).
 - **Grounding and reject-don't-repair** (`investigation/validator.py`).
+- **Grounding is not causation**: a cited fact exists; whether it supports the claim is
+  a separate question (C3, `confidence_unsupported`).
+- **Time zones at boundaries**: botocore returns CloudWatch timestamps in the machine's
+  local zone; the collector converts to UTC, or a fact says "13:10 UTC" for 12:10 UTC
+  (`collectors/aws/metrics.py`, `detection/statements.py:hhmm`).
 - **Fail-safe ordering**: arm the timer before anything can fail (`user_data.sh.tftpl`).
 - **Tests that prove themselves**: mutation testing of policies and guardrails.
 - **Assume-role chains**: `role_arn` + `source_profile`; after `sts:AssumeRole` the caller is
@@ -379,6 +416,13 @@ commands; one retry, never repaired.
 *Follow-ups:* What if the model cites a real fact for a wrong conclusion? (Citations prove
 grounding, not correctness: the human judges; confidence is shown as text.) What if log text
 contains instructions? (Data markers, clipping, and validation whatever the model writes.)
+
+**Q: Your model cited real facts and still gave a wrong root cause. How do you handle it?**
+Citations prove grounding, not inference. I separated what code can enforce (structure:
+"high" confidence cannot join co-occurring breaches or rest on gaps) from what only the
+prompt can ask (wording, alternatives) and from what must be measured (a manual eval on
+fixed cases). *Follow-up:* why not a phrase filter on "caused"? It breaks on paraphrase and
+blocks legitimate diagnoses; the check reads citations and confidence instead.
 
 **Q: What happens if a component fails?**
 LLM down: everything except the investigation panel works (principle 7). AWS unreachable:

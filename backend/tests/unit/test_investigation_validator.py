@@ -4,9 +4,15 @@ import json
 
 import pytest
 
+from sentinel.investigation.bundle import CitedFact
 from sentinel.investigation.validator import ValidationFailure, validate_output
 
-FACTS = {"F1", "F2", "F3"}
+# A CPU breach, the deployment before it, and a signal checked and normal.
+FACTS = {
+    "F1": CitedFact("threshold_breach", "R-CPU-SAT"),
+    "F2": CitedFact("event", None),
+    "F3": CitedFact("within_normal", "R-MEM"),
+}
 
 
 def _reply(**overrides):
@@ -188,3 +194,45 @@ def test_model_text_echoed_in_a_rejection_is_bounded():
         validate_output(_reply(hypotheses=hypotheses), FACTS)
     assert info.value.reason == "unknown_fact"
     assert len(info.value.detail) <= 300
+
+
+# --- confidence_unsupported: structural, never about the wording ------------------------
+
+# Two breaches of different rules, a signal checked and normal, and a data gap.
+JOINED = {
+    "F1": CitedFact("threshold_breach", "R-CPU-CREDIT"),
+    "F2": CitedFact("threshold_breach", "R-5XX"),
+    "F3": CitedFact("within_normal", "R-CPU-SAT"),
+    "F4": CitedFact("data_gap", "R-MEM"),
+}
+
+
+def _hypothesis(confidence, cites):
+    return [{"id": "H1", "statement": "x", "confidence": confidence, "cites": cites}]
+
+
+def test_confidence_unsupported_high_joining_breaches_of_two_rules():
+    reply = _reply(hypotheses=_hypothesis("high", ["F1", "F2"]), next_checks=[], remediation=[])
+    with pytest.raises(ValidationFailure) as info:
+        validate_output(reply, JOINED)
+    assert info.value.reason == "confidence_unsupported"
+    assert "R-5XX, R-CPU-CREDIT" in info.value.detail  # the retry names what to fix
+
+
+def test_confidence_unsupported_high_resting_on_data_gaps_only():
+    reply = _reply(hypotheses=_hypothesis("high", ["F4"]), next_checks=[], remediation=[])
+    assert _reason(reply, JOINED) == "confidence_unsupported"
+
+
+@pytest.mark.parametrize(
+    ("confidence", "cites"),
+    [
+        ("medium", ["F1", "F2"]),  # a correlation, stated as one, is allowed
+        ("high", ["F2", "F3"]),  # one breach plus a normal signal as context
+        ("high", ["F2", "F4"]),  # one breach plus a gap: the gap is not the support
+        ("low", ["F4"]),
+    ],
+)
+def test_confidence_is_accepted_when_the_citations_can_carry_it(confidence, cites):
+    reply = _reply(hypotheses=_hypothesis(confidence, cites), next_checks=[], remediation=[])
+    assert validate_output(reply, JOINED).hypotheses[0].confidence == confidence
