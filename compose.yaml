@@ -1,0 +1,69 @@
+# CloudOps Sentinel, local deployment: docker compose up --build -d, then open
+# http://localhost:8080. Simulated mode and the mock investigation provider by default:
+# no AWS credentials, no API key, no network calls to AWS or an LLM.
+name: cloudops-sentinel
+
+services:
+  backend:
+    build: ./backend
+    image: cloudops-sentinel-backend:local
+    environment:
+      # Fixed here so the optional .env.docker cannot switch modes: this setup has no AWS
+      # credentials, and one database file must never mix simulated and AWS data.
+      SENTINEL_MODE: local
+      SENTINEL_DB_PATH: /data/sentinel-local.db
+    # Optional, runtime only (never in the image): LLM provider settings and key.
+    # Template: .env.docker.example. Values here are overridden by `environment` above.
+    env_file:
+      - path: .env.docker
+        required: false
+    volumes:
+      - sentinel-data:/data # SQLite: incidents, sync runs, investigations
+    expose:
+      - "8000" # reachable by the frontend only; not published on the host
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    image: cloudops-sentinel-frontend:local
+    ports:
+      # This machine only (no authentication in V1). Another host port if 8080 is taken:
+      # SENTINEL_HTTP_PORT=8081 docker compose up -d
+      - "127.0.0.1:${SENTINEL_HTTP_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    read_only: true
+    tmpfs:
+      - /tmp # Nginx pid and temporary files (nginx-unprivileged keeps them in /tmp)
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  sentinel-data:

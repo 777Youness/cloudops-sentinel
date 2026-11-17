@@ -97,6 +97,7 @@ only in `collectors/aws/`) are enforced by a test. Details: [docs/architecture.m
 | API contract | OpenAPI exported from the backend; TypeScript types generated and checked in CI |
 | Infrastructure | Terraform (AWS provider 6), VPC, EC2, IAM, CloudWatch agent, CloudWatch Logs |
 | LLM | Provider-agnostic: a deterministic mock, or any OpenAI-compatible endpoint (tested with GroqCloud `openai/gpt-oss-20b`) |
+| Packaging | Docker Compose: FastAPI image (locked uv dependencies, non-root) and Nginx image (static build + reverse proxy) |
 | CI | GitHub Actions: lint, tests, API-contract check, typecheck, build, gitleaks secret scan |
 
 ## Security architecture
@@ -185,9 +186,9 @@ caught it.
   observed terminating a real instance. Always run `terraform destroy`.
 
 **Not built in V1**
-- Deployment events and alarm states are not collected in AWS mode; Resources pages; Docker
-  Compose; scheduled syncs; authentication. Sentinel is single-user and must stay bound to
-  `127.0.0.1`.
+- Deployment events and alarm states are not collected in AWS mode; Resources pages;
+  scheduled syncs; authentication; AWS mode inside Docker. Sentinel is single-user and must
+  stay bound to `127.0.0.1`.
 
 **By nature of the approach**
 - An LLM investigation ranks explanations; with metrics alone it rarely proves a cause.
@@ -195,6 +196,42 @@ caught it.
   console marks every hypothesis "Inferred", and remediation is always a human decision.
 - Results vary between models and between runs; the reliability cases in
   `backend/evals/` must be re-run when the model or prompt changes.
+
+## Docker quick start
+
+Requirements: [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/)
+on Windows (WSL 2 backend), started before the commands below. No AWS account or API key.
+
+```bash
+docker compose up --build -d
+```
+
+Open http://localhost:8080 and click **Sync now**. Two containers run: `frontend` (Nginx
+serving the console and proxying `/api/` to the backend) and `backend` (FastAPI, not
+published on the host). Only `127.0.0.1:8080` is exposed. If port 8080 is already taken,
+choose another one: `SENTINEL_HTTP_PORT=8081 docker compose up --build -d` (PowerShell:
+`$env:SENTINEL_HTTP_PORT = "8081"` first).
+
+| Task | Command |
+|---|---|
+| Status and health | `docker compose ps` |
+| Logs | `docker compose logs -f backend frontend` |
+| Rebuild after a code change | `docker compose up --build -d` |
+| Stop, keeping the data | `docker compose down` |
+| Stop and delete the Docker database | `docker compose down --volumes` |
+| Smoke and persistence test | `python scripts/docker_smoke.py` |
+
+**Data.** Incidents, syncs and investigations are stored in SQLite in the named volume
+`cloudops-sentinel_sentinel-data`, which survives `down`, restarts and rebuilds. It is a
+separate, simulated-only database: the containers never read or write the host files in
+`backend/data/` (including the AWS incident history), and no database is copied into an
+image. Docker always runs in simulated mode and mounts no AWS credentials; use the
+[AWS mode](#optional-aws-mode) below from a host install instead.
+
+**Optional real LLM.** Copy `.env.docker.example` to `.env.docker` (gitignored), uncomment
+the provider lines (GroqCloud or Ollama on the host via `host.docker.internal`), add the key,
+then run `docker compose up -d`. The key is read at container start only; it is never in an
+image. Delete the file and run `docker compose up -d` again to return to the mock.
 
 ## Run locally
 
@@ -279,9 +316,10 @@ address, API key, browser profile or local file path. Simulated mode shows none 
 ```
 backend/    FastAPI app: collectors, detection, investigation, store, services, tests, evals
 frontend/   React + TypeScript console
+compose.yaml  two containers (backend, frontend) and the SQLite volume
 infra/      Terraform for the monitored dev workload, IAM policies
 workload/   the small stdlib HTTP app deployed on EC2
-scripts/    demo traffic, leftover check, policy rendering (run by a human)
+scripts/    demo traffic, leftover check, policy rendering, Docker smoke test (run by a human)
 docs/       architecture, domain model, API, rules, design system, cost, ADRs
 CLAUDE.md   rules for AI-assisted development in this repository
 ```

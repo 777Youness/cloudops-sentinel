@@ -1,0 +1,8 @@
+# The image is built from package.json, package-lock.json, index.html, src/ and configs.
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+Dockerfile
+.dockerignore
