@@ -1,0 +1,76 @@
+/* Shared data-table look (Overview, Incidents, System). Semantic <table> markup stays in
+   each page; these classes only style it. */
+.wrap {
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+}
+.table th {
+  height: 52px;
+  padding: 0 var(--sp-4);
+  background: var(--raised);
+  text-align: left;
+  font-size: var(--fs-13);
+  font-weight: var(--fw-semibold);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.table th:first-child {
+  padding-left: var(--sp-6);
+}
+.table th:last-child {
+  padding-right: var(--sp-6);
+}
+.row td {
+  height: var(--row-height);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--rule-dashed);
+  vertical-align: middle;
+}
+.row:last-child td {
+  border-bottom: none;
+}
+.row td:first-child {
+  padding-left: var(--sp-6);
+}
+.row td:last-child {
+  padding-right: var(--sp-6);
+}
+.row:hover td {
+  background: var(--raised);
+}
+.primaryText {
+  display: block;
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+}
+a.primaryText:hover {
+  color: var(--accent);
+  text-decoration: none;
+}
+.sub {
+  display: block;
+  font-size: var(--fs-12);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.muted {
+  color: var(--text-3);
+}
+.signal {
+  display: inline-flex;
+  gap: var(--sp-2);
+  margin-right: var(--sp-3);
+  white-space: nowrap;
+}
+.signalLabel {
+  color: var(--text-3);
+}
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--sp-3) var(--sp-6);
+  border-top: var(--rule-dashed);
+  font-size: var(--fs-14);
+}

@@ -1,6 +1,8 @@
 # ADR 0011 — CSS Modules and design tokens
 
-- Status: accepted
+- Status: accepted. The visual values (light theme, card radii and shadows) are amended by
+  [ADR 0020](0020-light-card-dashboard-visual-language.md); the decision itself (CSS
+  Modules + tokens, no component library) stands.
 - Date: 2026-09-23
 
 ## Context

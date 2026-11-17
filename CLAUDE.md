@@ -219,9 +219,10 @@ frameworks.
   `docs/design-system.md` first.
 - Copy and labels: sentence case (no all-caps labels), metadata as key–value pairs (no
   strings joined with "·"), no arrows appended to buttons or links.
-- **Forbidden:** gradients, glassmorphism, glow, blobs, drop shadows on content, radius > 4 px,
-  cards nested in cards, chart entrance animations, emoji, decorative icons, marketing copy,
-  hero-sized headings.
+- **Forbidden:** gradients, glassmorphism, glow, blobs, shadows other than the two tokens
+  (`--shadow-card`, `--shadow-overlay`), radius > 16 px, cards nested in cards, chart entrance
+  animations, emoji, decorative icons (icons only in navigation, metric cards and buttons,
+  always next to text), marketing copy, hero-sized headings. Visual language: ADR 0020.
 - Color encodes state only (ok / warn / crit / unknown, severity). The accent is for selection,
   links, focus and deployment markers. Severity always has a text label, never color alone.
 - Epistemic styling: observed facts = solid left rule; AI inferences = dashed left rule +

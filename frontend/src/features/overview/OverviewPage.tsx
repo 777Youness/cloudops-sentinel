@@ -2,6 +2,8 @@
  * Overview (docs/screens.md): what is wrong right now, and can I trust this data?
  * Everything here is read from GET /overview; health is decided by the backend.
  */
+import { Info, OctagonAlert, Siren, TriangleAlert } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 
 import type {
@@ -12,10 +14,14 @@ import type {
   Severity,
 } from '../../api/types';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
+import { Label, type LabelTone } from '../../components/Label';
+import { PageHeader } from '../../components/PageHeader';
 import { RefreshError } from '../../components/RefreshError';
 import { SeverityTag } from '../../components/SeverityTag';
 import { SkeletonRows } from '../../components/SkeletonRows';
 import { EmptyState, ErrorState } from '../../components/StateMessage';
+import table from '../../components/Table.module.css';
 import {
   capitalize,
   formatRelative,
@@ -34,6 +40,20 @@ import styles from './OverviewPage.module.css';
 
 const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low'];
 
+const SEVERITY_ICON: Record<Severity, ReactNode> = {
+  critical: <OctagonAlert />,
+  high: <Siren />,
+  medium: <TriangleAlert />,
+  low: <Info />,
+};
+
+const HEALTH_TONE: Record<HealthState, LabelTone> = {
+  crit: 'crit',
+  warn: 'warn',
+  ok: 'ok',
+  unknown: 'unknown',
+};
+
 const HEALTH_LABEL: Record<HealthState, string> = {
   crit: 'Failing',
   warn: 'Degraded',
@@ -46,12 +66,19 @@ function SeveritySummary({ overview }: { overview: Overview }) {
     <dl className={styles.severities} aria-label="Open incidents by severity">
       {SEVERITIES.map((s) => {
         const count = overview.open_by_severity[s];
+        const classes = [styles.metric, styles[`metric_${s}`], count === 0 ? styles.zero : '']
+          .filter(Boolean)
+          .join(' ');
         return (
-          <div key={s} className={count === 0 ? styles.zero : undefined}>
-            <dt>
+          <div key={s} className={classes}>
+            <dt className={styles.metricHead}>
               <SeverityTag severity={s} />
+              <span className={styles.metricIcon} aria-hidden="true">
+                {SEVERITY_ICON[s]}
+              </span>
             </dt>
-            <dd className="mono">{count}</dd>
+            <dd className={`mono ${styles.metricValue}`}>{count}</dd>
+            <dd className={styles.metricCaption}>open {count === 1 ? 'incident' : 'incidents'}</dd>
           </div>
         );
       })}
@@ -75,44 +102,46 @@ function OpenIncidents({ overview, now }: { overview: Overview; now: number }) {
   }
   return (
     <>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th scope="col">Severity</th>
-            <th scope="col">Incident</th>
-            <th scope="col">Key signal</th>
-            <th scope="col">Detected</th>
-          </tr>
-        </thead>
-        <tbody>
-          {overview.top_open_incidents.map((i: IncidentSummary) => (
-            <tr key={i.id} className={`${styles.row} ${styles[`sev_${i.severity}`]}`}>
-              <td>
-                <SeverityTag severity={i.severity} />
-              </td>
-              <td>
-                <Link to={`/incidents/${i.id}`} className={styles.titleLink}>
-                  {i.title}
-                </Link>
-                <span className={`mono ${styles.sub}`}>{i.id}</span>
-              </td>
-              <td>
-                {i.key_signals.map((s) => (
-                  <span key={s.signal} className={styles.signal}>
-                    <span className={styles.signalLabel}>{SIGNAL_LABELS[s.signal]}</span>
-                    <span className="mono">{formatSignalValue(s)}</span>
-                  </span>
-                ))}
-              </td>
-              <td title={formatUtcFull(i.first_detected_at)}>
-                <span className="mono">{formatUtc(i.first_detected_at)}</span>
-                <span className={styles.sub}>{formatRelative(i.first_detected_at, now)}</span>
-              </td>
+      <div className={table.wrap}>
+        <table className={table.table}>
+          <thead>
+            <tr>
+              <th scope="col">Severity</th>
+              <th scope="col">Incident</th>
+              <th scope="col">Key signal</th>
+              <th scope="col">Detected</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className={styles.more}>
+          </thead>
+          <tbody>
+            {overview.top_open_incidents.map((i: IncidentSummary) => (
+              <tr key={i.id} className={table.row}>
+                <td>
+                  <SeverityTag severity={i.severity} />
+                </td>
+                <td>
+                  <Link to={`/incidents/${i.id}`} className={table.primaryText}>
+                    {i.title}
+                  </Link>
+                  <span className={`mono ${table.sub}`}>{i.id}</span>
+                </td>
+                <td>
+                  {i.key_signals.map((s) => (
+                    <span key={s.signal} className={table.signal}>
+                      <span className={table.signalLabel}>{SIGNAL_LABELS[s.signal]}</span>
+                      <span className="mono">{formatSignalValue(s)}</span>
+                    </span>
+                  ))}
+                </td>
+                <td title={formatUtcFull(i.first_detected_at)}>
+                  <span className="mono">{formatUtc(i.first_detected_at)}</span>
+                  <span className={table.sub}>{formatRelative(i.first_detected_at, now)}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className={table.footer}>
         <Link to="/incidents?status=open">All open incidents ({overview.open_total})</Link>
       </p>
     </>
@@ -130,11 +159,13 @@ function DataTrust({ overview, now }: { overview: Overview; now: number }) {
       <div>
         <dt>Data</dt>
         <dd>
-          {overview.data_origin === 'aws'
-            ? 'AWS'
-            : overview.data_origin === 'simulated'
-              ? 'Simulated'
-              : 'None collected yet'}
+          {overview.data_origin === 'aws' ? (
+            <Label tone="accent">AWS</Label>
+          ) : overview.data_origin === 'simulated' ? (
+            <Label tone="warn">Simulated</Label>
+          ) : (
+            'None collected yet'
+          )}
         </dd>
       </div>
       <div>
@@ -146,7 +177,11 @@ function DataTrust({ overview, now }: { overview: Overview; now: number }) {
                 {formatUtc(asOf)}
               </span>{' '}
               <span className={styles.sub}>{formatRelative(asOf, now)}</span>
-              {stale && <span className={styles.stale}>Stale</span>}
+              {stale && (
+                <Label tone="warn" className={styles.stale}>
+                  Stale
+                </Label>
+              )}
             </>
           ) : (
             'No sync has succeeded yet'
@@ -158,9 +193,13 @@ function DataTrust({ overview, now }: { overview: Overview; now: number }) {
         <dd>
           {last ? (
             <>
-              <span className={last.status === 'success' ? undefined : styles.failed}>
+              <Label
+                tone={
+                  last.status === 'success' ? 'ok' : last.status === 'partial' ? 'warn' : 'crit'
+                }
+              >
                 {capitalize(last.status)}
-              </span>{' '}
+              </Label>{' '}
               <span className={styles.sub} title={formatUtcFull(last.finished_at)}>
                 {formatRelative(last.finished_at, now)}
               </span>
@@ -184,7 +223,7 @@ function DataTrust({ overview, now }: { overview: Overview; now: number }) {
               {last.collectors.map((c) => (
                 <span key={c.name} className={styles.collector}>
                   <span className="mono">{c.name}</span>{' '}
-                  <span className={c.state === 'ok' ? undefined : styles.failed}>
+                  <span className={c.state === 'ok' ? styles.collectorOk : styles.failed}>
                     {c.state === 'ok' ? 'OK' : capitalize(c.state)}
                   </span>
                 </span>
@@ -222,10 +261,10 @@ function DataTrust({ overview, now }: { overview: Overview; now: number }) {
 
 function Health({ health }: { health: HealthState }) {
   return (
-    <span className={styles.health}>
+    <Label tone={HEALTH_TONE[health]}>
       <span className={`${styles.dot} ${styles[`health_${health}`]}`} aria-hidden="true" />
       {HEALTH_LABEL[health]}
-    </span>
+    </Label>
   );
 }
 
@@ -256,48 +295,50 @@ function Resources({ overview }: { overview: Overview }) {
     );
   }
   return (
-    <table className={styles.table}>
-      <thead>
-        <tr>
-          <th scope="col">Health</th>
-          <th scope="col">Resource</th>
-          <th scope="col">Type</th>
-          <th scope="col">Open incident</th>
-          <th scope="col">Signals</th>
-        </tr>
-      </thead>
-      <tbody>
-        {overview.resources.map((r) => (
-          <tr key={r.resource_id} className={styles.row}>
-            <td>
-              <Health health={r.health} />
-            </td>
-            <td>
-              {r.resource_name}
-              <span className={`mono ${styles.sub}`}>{r.resource_id}</span>
-            </td>
-            <td className="mono">{r.instance_type}</td>
-            <td>
-              {r.open_incident_id ? (
-                <>
-                  <Link to={`/incidents/${r.open_incident_id}`} className="mono">
-                    {r.open_incident_id}
-                  </Link>
-                  {r.open_incident_severity && (
-                    <span className={styles.sub}>{capitalize(r.open_incident_severity)}</span>
-                  )}
-                </>
-              ) : (
-                <span className={styles.none}>None</span>
-              )}
-            </td>
-            <td>
-              <Signals resource={r} />
-            </td>
+    <div className={table.wrap}>
+      <table className={table.table}>
+        <thead>
+          <tr>
+            <th scope="col">Health</th>
+            <th scope="col">Resource</th>
+            <th scope="col">Type</th>
+            <th scope="col">Open incident</th>
+            <th scope="col">Signals</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {overview.resources.map((r) => (
+            <tr key={r.resource_id} className={table.row}>
+              <td>
+                <Health health={r.health} />
+              </td>
+              <td>
+                <span className={table.primaryText}>{r.resource_name}</span>
+                <span className={`mono ${table.sub}`}>{r.resource_id}</span>
+              </td>
+              <td className="mono">{r.instance_type}</td>
+              <td>
+                {r.open_incident_id ? (
+                  <>
+                    <Link to={`/incidents/${r.open_incident_id}`} className="mono">
+                      {r.open_incident_id}
+                    </Link>
+                    {r.open_incident_severity && (
+                      <span className={table.sub}>{capitalize(r.open_incident_severity)}</span>
+                    )}
+                  </>
+                ) : (
+                  <span className={table.muted}>None</span>
+                )}
+              </td>
+              <td>
+                <Signals resource={r} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -309,7 +350,7 @@ function NeverSynced() {
       title="No data yet."
       detail="Run a sync to collect telemetry, evaluate the detection rules and see the health of each monitored resource."
       action={
-        <Button onClick={() => sync.mutate()} disabled={pending}>
+        <Button variant="primary" onClick={() => sync.mutate()} disabled={pending}>
           {pending ? 'Syncing' : 'Sync now'}
         </Button>
       }
@@ -319,10 +360,17 @@ function NeverSynced() {
 
 function Skeleton() {
   return (
-    <div aria-busy="true" aria-label="Loading overview">
-      <table className={styles.table}>
-        <SkeletonRows columns={5} rows={5} />
-      </table>
+    <div aria-busy="true" aria-label="Loading overview" className={styles.skeleton}>
+      <div className={styles.severities}>
+        {SEVERITIES.map((s) => (
+          <div key={s} className={`${styles.metric} ${styles.metricSkeleton}`} />
+        ))}
+      </div>
+      <Card flush>
+        <table className={table.table}>
+          <SkeletonRows columns={5} rows={5} />
+        </table>
+      </Card>
     </div>
   );
 }
@@ -336,13 +384,19 @@ export function OverviewPage() {
     body = <Skeleton />;
   } else if (overview.isError && !overview.data) {
     body = (
-      <ErrorState
-        error={overview.error}
-        action={<Button onClick={() => overview.refetch()}>Retry</Button>}
-      />
+      <Card>
+        <ErrorState
+          error={overview.error}
+          action={<Button onClick={() => overview.refetch()}>Retry</Button>}
+        />
+      </Card>
     );
   } else if (!overview.data.last_sync) {
-    body = <NeverSynced />;
+    body = (
+      <Card>
+        <NeverSynced />
+      </Card>
+    );
   } else {
     const data = overview.data;
     body = (
@@ -352,34 +406,41 @@ export function OverviewPage() {
         )}
         <SeveritySummary overview={data} />
         <div className={styles.columns}>
-          <section aria-labelledby="open-title">
-            <h2 id="open-title" className={styles.h2}>
-              Open incidents
-            </h2>
+          <Card
+            title="Open incidents"
+            titleId="open-title"
+            subheader="Highest severity first"
+            flush
+          >
             <OpenIncidents overview={data} now={now} />
-          </section>
-          <section aria-labelledby="trust-title">
-            <h2 id="trust-title" className={styles.h2}>
-              Data trust
-            </h2>
+          </Card>
+          <Card
+            title="Data trust"
+            titleId="trust-title"
+            subheader="Where this data comes from and how fresh it is"
+          >
             <DataTrust overview={data} now={now} />
-          </section>
+          </Card>
         </div>
-        <section aria-labelledby="resources-title">
-          <h2 id="resources-title" className={styles.h2}>
-            Monitored resources
-          </h2>
+        <Card
+          title="Monitored resources"
+          titleId="resources-title"
+          subheader="Health is decided by the backend; missing signals are named, never shown as 0"
+          flush
+        >
           <Resources overview={data} />
-        </section>
+        </Card>
       </>
     );
   }
 
   return (
     <section aria-labelledby="overview-title" className={styles.page}>
-      <h1 id="overview-title" className={styles.h1}>
-        Overview
-      </h1>
+      <PageHeader
+        title="Overview"
+        titleId="overview-title"
+        description="What is wrong right now, and whether the data can be trusted."
+      />
       {body}
     </section>
   );

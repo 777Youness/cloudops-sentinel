@@ -1,0 +1,44 @@
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  height: 24px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-1);
+  font-size: var(--fs-12);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  white-space: nowrap;
+}
+.label :global(svg) {
+  width: 14px;
+  height: 14px;
+}
+.ok {
+  background: var(--ok-tint);
+  color: var(--ok-text);
+}
+.warn {
+  background: var(--warn-tint);
+  color: var(--warn-text);
+}
+.crit {
+  background: var(--crit-tint);
+  color: var(--crit-text);
+}
+.info {
+  background: var(--info-tint);
+  color: var(--info-text);
+}
+.unknown {
+  background: var(--unknown-tint);
+  color: var(--unknown-text);
+}
+.accent {
+  background: var(--accent-tint-strong);
+  color: var(--accent-strong);
+}
+.neutral {
+  background: var(--raised);
+  color: var(--text-2);
+}

@@ -1,7 +1,9 @@
+import { Menu, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { ApiError } from '../api/client';
 import { Button } from '../components/Button';
+import { Label } from '../components/Label';
 import { useElapsedSeconds, useSync, useSyncActivity } from '../features/sync/api';
 import { useSystem } from '../features/system/api';
 import { formatRelative, formatUtcFull } from '../lib/format';
@@ -43,19 +45,26 @@ function SyncStatus() {
     );
   }
   return (
-    <span className={styles.status} title={formatUtcFull(last.finished_at)}>
+    <span className={`${styles.status} ${styles.ok}`} title={formatUtcFull(last.finished_at)}>
+      <span className={styles.okDot} aria-hidden="true" />
       Synced {formatRelative(last.finished_at, now)}
     </span>
   );
 }
 
-export function TopBar() {
+export function TopBar({ onOpenNav }: { onOpenNav?: () => void }) {
   const { data } = useSystem();
   const sync = useSync();
   const { pending } = useSyncActivity();
 
   return (
     <header className={styles.bar}>
+      {onOpenNav && (
+        <button type="button" className={styles.menu} onClick={onOpenNav}>
+          <Menu aria-hidden="true" />
+          <span className="visually-hidden">Open menu</span>
+        </button>
+      )}
       <dl className={styles.context}>
         <div className={styles.item}>
           <dt>Environment</dt>
@@ -63,16 +72,29 @@ export function TopBar() {
         </div>
         <div className={styles.item}>
           <dt>Data</dt>
-          <dd>{data ? (data.mode === 'local' ? 'Simulated' : 'AWS') : '–'}</dd>
+          <dd>
+            {data ? (
+              <Label tone={data.mode === 'local' ? 'warn' : 'accent'}>
+                {data.mode === 'local' ? 'Simulated' : 'AWS'}
+              </Label>
+            ) : (
+              '–'
+            )}
+          </dd>
         </div>
-        <div className={styles.item}>
+        <div className={`${styles.item} ${styles.region}`}>
           <dt>Region</dt>
           <dd className="mono">{data?.region ?? '–'}</dd>
         </div>
       </dl>
       <div className={styles.actions}>
         <SyncStatus />
-        <Button onClick={() => sync.mutate()} disabled={pending}>
+        <Button
+          variant="primary"
+          icon={<RefreshCw className={pending ? styles.spin : undefined} />}
+          onClick={() => sync.mutate()}
+          disabled={pending}
+        >
           Sync now
         </Button>
       </div>

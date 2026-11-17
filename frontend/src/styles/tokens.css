@@ -1,74 +1,105 @@
 /*
  * CloudOps Sentinel design tokens. Components use these variables only:
  * no raw hex values, ad-hoc font sizes or shadows elsewhere.
- * Source of truth: docs/design-system.md
+ * Source of truth: docs/design-system.md. Visual language: ADR 0020 (light, card-based,
+ * inspired by the MIT-licensed Minimal UI kit; no code or assets copied from it).
+ * Every text color below meets WCAG AA (>= 4.5:1) on --surface and --bg.
  */
 :root {
-  /* Backgrounds: warm graphite, not blue-black */
-  --bg: #0f1113;
-  --surface: #15181b;
-  --raised: #1b1f23;
+  /* Backgrounds */
+  --bg: #f6f7f9; /* page */
+  --surface: #ffffff; /* cards, sidebar, header */
+  --raised: #f2f4f7; /* table heads, hover, skeletons, subtle fills */
+  --overlay-backdrop: rgb(22 28 36 / 48%);
 
-  /* Borders do most of the structuring */
-  --border: #262b30;
-  --border-strong: #343a41;
+  /* Borders: soft, never black */
+  --border: rgb(145 158 171 / 20%);
+  --border-strong: rgb(145 158 171 / 36%);
 
-  /* Text: three levels only */
-  --text-1: #e4e6e8;
-  --text-2: #a2a9b1;
-  --text-3: #7d858e;
+  /* Text: three levels, all AA */
+  --text-1: #1c252e; /* 15.5:1 */
+  --text-2: #454f5b; /* 8.5:1 */
+  --text-3: #637381; /* 4.9:1 */
+  --text-on-strong: #ffffff;
 
-  /* Accent: selection, links, focus, deployment markers. Never a status. */
-  --accent: #6fa3d9;
+  /* Accent ("Sentinel blue"): selection, links, focus, deployment markers. Never a status. */
+  --accent: #0c68e9; /* 5.0:1 */
+  --accent-strong: #0351ab;
+  --accent-tint: rgb(12 104 233 / 8%);
+  --accent-tint-strong: rgb(12 104 233 / 16%);
 
-  /* State: color means state and nothing else */
-  --ok: #3fae7a;
-  --warn: #d9a13b;
-  --crit: #e0584f;
-  --unknown: #7a828b;
-  --ok-tint: rgb(63 174 122 / 12%);
-  --warn-tint: rgb(217 161 59 / 12%);
-  --crit-tint: rgb(224 88 79 / 12%);
+  /* State: color means state and nothing else. "main" for marks, "text" for words. */
+  --ok: #22c55e;
+  --warn: #ffab00;
+  --crit: #ff5630;
+  --info: #00b8d9;
+  --unknown: #919eab;
+  --ok-text: #065e49;
+  --warn-text: #7a4100;
+  --crit-text: #b71d18;
+  --info-text: #006c9c;
+  --unknown-text: #454f5b;
+  --crit-strong: #b71d18; /* filled "Critical": white text on it is 6.6:1 */
+  --ok-tint: rgb(34 197 94 / 16%);
+  --warn-tint: rgb(255 171 0 / 16%);
+  --crit-tint: rgb(255 86 48 / 16%);
+  --info-tint: rgb(0 184 217 / 16%);
+  --unknown-tint: rgb(145 158 171 / 16%);
+
+  /* Primary action: dark, like the reference kit's "inherit" contained button */
+  --action: #1c252e;
+  --action-hover: #454f5b;
 
   /* Type */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --fs-11: 11px;
   --fs-12: 12px;
-  --fs-13: 13px; /* body */
-  --fs-14: 14px;
+  --fs-13: 13px;
+  --fs-14: 14px; /* body */
   --fs-16: 16px;
+  --fs-18: 18px;
   --fs-20: 20px;
-  --fs-24: 24px;
+  --fs-24: 24px; /* page titles */
+  --fs-32: 32px; /* metric values */
   --fw-regular: 400;
   --fw-medium: 500;
   --fw-semibold: 600;
+  --fw-bold: 700;
   --lh-tight: 1.25;
-  --lh-body: 1.5;
+  --lh-body: 1.55;
+  --tracking-caps: 0.04em;
 
   /* Spacing: 4 px base */
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
   --sp-4: 16px;
+  --sp-5: 20px;
   --sp-6: 24px;
   --sp-8: 32px;
+  --sp-10: 40px;
   --sp-12: 48px;
 
   /* Shape */
-  --radius-1: 2px;
-  --radius-2: 4px; /* maximum */
+  --radius-1: 6px; /* labels, small controls */
+  --radius-2: 8px; /* buttons, nav items, inputs */
+  --radius-3: 16px; /* cards */
+  --radius-round: 999px;
   --rule: 1px solid var(--border);
   --rule-strong: 1px solid var(--border-strong);
+  --rule-dashed: 1px dashed var(--border-strong);
 
-  /* Elevation: overlays only */
-  --shadow-overlay: 0 4px 16px rgb(0 0 0 / 40%);
+  /* Elevation: cards rest on the page; overlays float above it */
+  --shadow-card: 0 0 2px 0 rgb(145 158 171 / 20%), 0 12px 24px -4px rgb(145 158 171 / 12%);
+  --shadow-overlay: 0 0 2px 0 rgb(145 158 171 / 24%), -20px 20px 40px -4px rgb(145 158 171 / 24%);
 
   /* Motion */
-  --duration: 120ms;
+  --duration: 150ms;
 
   /* Layout */
-  --sidebar-width: 208px;
-  --topbar-height: 44px;
-  --row-height: 36px;
+  --sidebar-width: 264px;
+  --topbar-height: 64px;
+  --row-height: 52px;
+  --content-max: 1440px;
 }

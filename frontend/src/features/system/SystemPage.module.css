@@ -1,67 +1,62 @@
 .page {
-  max-width: 960px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
 }
-.h1 {
-  font-size: var(--fs-20);
-  font-weight: var(--fw-semibold);
-  line-height: var(--lh-tight);
-  margin-bottom: var(--sp-4);
+.columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-6);
+  align-items: start;
 }
-.h2 {
-  margin: var(--sp-8) 0 var(--sp-2);
-  font-size: var(--fs-14);
-  font-weight: var(--fw-semibold);
-  padding-bottom: var(--sp-2);
-  border-bottom: var(--rule-strong);
+@media (max-width: 1023px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 .list {
   display: grid;
 }
 .kv {
   display: grid;
-  grid-template-columns: 200px 1fr;
+  grid-template-columns: 180px minmax(0, 1fr);
   gap: var(--sp-4);
-  padding: var(--sp-2) 0;
-  border-bottom: var(--rule);
+  padding: var(--sp-3) 0;
+  border-bottom: var(--rule-dashed);
+}
+.kv:first-child {
+  padding-top: 0;
+}
+.kv:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
 }
 .kv dt {
-  color: var(--text-2);
+  color: var(--text-3);
 }
-.table {
-  width: 100%;
+.kv dd {
+  color: var(--text-1);
+  overflow-wrap: anywhere;
 }
-.table th {
-  text-align: left;
-  font-size: var(--fs-12);
-  font-weight: var(--fw-medium);
-  color: var(--text-2);
-  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
-  border-bottom: var(--rule);
+.source {
+  font-weight: var(--fw-semibold);
 }
-.table td {
-  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
-  border-bottom: var(--rule);
-  vertical-align: top;
+.code {
+  color: var(--crit-text);
+  font-weight: var(--fw-semibold);
 }
 .hint {
   display: block;
-  color: var(--text-2);
+  margin-top: 2px;
+  font-size: var(--fs-13);
+  color: var(--text-3);
 }
 .muted {
   color: var(--text-3);
 }
-.state_ok,
-.outcome_success {
-  color: var(--ok);
-}
-.state_degraded,
-.outcome_partial {
-  color: var(--warn);
-}
-.state_failed,
-.outcome_failed {
-  color: var(--crit);
-}
-.state_disabled {
-  color: var(--text-3);
+@media (max-width: 639px) {
+  .kv {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
 }

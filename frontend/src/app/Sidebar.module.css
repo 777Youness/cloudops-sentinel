@@ -1,41 +1,86 @@
 .sidebar {
+  position: sticky;
+  top: 0;
   display: flex;
   flex-direction: column;
-  border-right: var(--rule);
-  background: var(--bg);
+  gap: var(--sp-2);
+  height: 100vh;
+  padding: 0 var(--sp-4) var(--sp-4);
+  border-right: var(--rule-dashed);
+  background: var(--surface);
+  overflow-y: auto;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: var(--topbar-height);
+  padding: 0 var(--sp-2);
+  flex: none;
+}
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-2);
+  background: var(--accent);
+  color: var(--text-on-strong);
+}
+.mark :global(svg) {
+  width: 20px;
+  height: 20px;
 }
 .wordmark {
-  height: var(--topbar-height);
   display: flex;
-  gap: var(--sp-2);
-  align-items: center;
-  padding: 0 var(--sp-4);
-  border-bottom: var(--rule);
+  flex-direction: column;
+  line-height: var(--lh-tight);
 }
 .product {
-  font-size: var(--fs-14);
-  font-weight: var(--fw-semibold);
-  letter-spacing: 0.01em;
+  font-size: var(--fs-16);
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
 }
 .family {
   font-size: var(--fs-12);
+  font-weight: var(--fw-medium);
   color: var(--text-3);
 }
-.nav {
-  padding: var(--sp-3) 0;
-  flex: 1;
+.close {
+  display: inline-flex;
+  margin-left: auto;
+  padding: var(--sp-1);
+  border: none;
+  border-radius: var(--radius-2);
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
 }
-.bottom {
-  padding: var(--sp-3) 0;
-  border-top: var(--rule);
+.close :global(svg) {
+  width: 20px;
+  height: 20px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.section {
+  padding: var(--sp-4) var(--sp-3) var(--sp-2);
+  font-size: var(--fs-11);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-caps);
+  color: var(--text-3);
 }
 .link {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  height: 32px;
-  padding: 0 var(--sp-4);
-  border-left: 2px solid transparent;
+  gap: var(--sp-3);
+  height: 44px;
+  padding: 0 var(--sp-3);
+  border-radius: var(--radius-2);
   color: var(--text-2);
   font-weight: var(--fw-medium);
   transition:
@@ -43,20 +88,85 @@
     background var(--duration);
 }
 .link:hover {
+  background: var(--raised);
   color: var(--text-1);
   text-decoration: none;
 }
-.active {
-  color: var(--text-1);
-  background: var(--surface);
-  border-left-color: var(--accent);
+.active,
+.active:hover {
+  background: var(--accent-tint);
+  color: var(--accent-strong);
+  font-weight: var(--fw-semibold);
+}
+.icon {
+  display: inline-flex;
+}
+.icon :global(svg) {
+  width: 22px;
+  height: 22px;
+}
+.text {
+  flex: 1;
 }
 .count {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-1);
+  background: var(--crit-tint);
+  color: var(--crit-text);
   font-size: var(--fs-12);
-  color: var(--text-2);
+  font-weight: var(--fw-bold);
+  line-height: 22px;
+  text-align: center;
 }
+
+.context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin-top: auto;
+  padding: var(--sp-4);
+  border-radius: var(--radius-3);
+  background: var(--raised);
+  font-size: var(--fs-12);
+}
+.context > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.context dt {
+  color: var(--text-3);
+}
+.context dd {
+  color: var(--text-1);
+  font-weight: var(--fw-medium);
+}
+
+.backdrop {
+  display: none;
+}
+
 @media (max-width: 1023px) {
   .sidebar {
-    display: none; /* collapsible menu arrives with the tablet layout pass */
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    width: var(--sidebar-width);
+    border-right: none;
+    box-shadow: var(--shadow-overlay);
+    transform: translateX(-100%);
+    transition: transform var(--duration);
+  }
+  .open {
+    transform: none;
+  }
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: var(--overlay-backdrop);
   }
 }

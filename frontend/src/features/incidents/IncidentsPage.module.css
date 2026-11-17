@@ -1,64 +1,55 @@
-.header {
+.page {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
   gap: var(--sp-6);
-  margin-bottom: var(--sp-4);
 }
-.h1 {
-  font-size: var(--fs-20);
-  font-weight: var(--fw-semibold);
-  line-height: var(--lh-tight);
-}
-.filters {
+
+/* Status tabs: underline indicator, filter lives in the URL (?status=). */
+.tabs {
   display: flex;
-  gap: var(--sp-1);
+  gap: var(--sp-8);
+  padding: 0 var(--sp-6);
+  border-bottom: var(--rule);
 }
-.filter {
-  padding: 2px var(--sp-2);
-  border-radius: var(--radius-1);
-  color: var(--text-2);
-  font-weight: var(--fw-medium);
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 52px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-3);
+  font-weight: var(--fw-semibold);
 }
-.filter:hover {
+.tab:hover {
   color: var(--text-1);
   text-decoration: none;
 }
-.filterActive {
+.tabActive,
+.tabActive:hover {
   color: var(--text-1);
-  background: var(--raised);
+  border-bottom-color: var(--text-1);
 }
-.tableWrap {
-  overflow-x: auto;
-  border-top: var(--rule-strong);
-}
-.table {
-  width: 100%;
-  min-width: 960px;
-}
-.table th {
-  height: 32px;
-  padding: 0 var(--sp-3);
-  text-align: left;
+.tabCount {
+  min-width: 24px;
+  height: 22px;
+  padding: 0 var(--sp-2);
+  border-radius: var(--radius-1);
+  background: var(--text-1);
+  color: var(--text-on-strong);
   font-size: var(--fs-12);
-  font-weight: var(--fw-medium);
-  color: var(--text-2);
-  border-bottom: var(--rule);
-  white-space: nowrap;
+  font-weight: var(--fw-bold);
+  line-height: 22px;
+  text-align: center;
 }
-.row td {
-  height: var(--row-height);
-  padding: var(--sp-2) var(--sp-3);
-  border-bottom: var(--rule);
-  vertical-align: middle;
+
+.table {
+  min-width: 960px;
 }
 /* Severity bar on the row's left edge: the fastest thing to scan in a long list. */
 .row td:first-child {
-  box-shadow: inset 3px 0 0 var(--sev-color, transparent);
-  padding-left: var(--sp-4);
+  box-shadow: inset 4px 0 0 var(--sev-color, transparent);
 }
-.sev_critical {
-  --sev-color: var(--crit);
-}
+.sev_critical,
 .sev_high {
   --sev-color: var(--crit);
 }
@@ -66,62 +57,22 @@
   --sev-color: var(--warn);
 }
 .sev_low {
-  --sev-color: var(--border-strong);
-}
-.title {
-  font-weight: var(--fw-medium);
-  color: var(--text-1);
-}
-/* The title is the row's link: one tab stop per incident, in the text color. */
-.titleLink {
-  color: var(--text-1);
-}
-.titleLink:hover {
-  color: var(--accent);
+  --sev-color: var(--unknown);
 }
 .resourceName {
   display: block;
-}
-.resourceId,
-.relative {
-  display: block;
-  font-size: var(--fs-12);
-  color: var(--text-3);
-}
-.signal {
-  display: inline-flex;
-  gap: var(--sp-2);
-  margin-right: var(--sp-3);
-}
-.signalLabel {
-  color: var(--text-2);
-}
-.muted {
-  color: var(--text-3);
+  color: var(--text-1);
 }
 
 .colSeverity {
-  width: 104px;
-}
-.colId {
-  width: 104px;
-}
-.colResource {
-  width: 200px;
-}
-.colSignal {
-  width: 140px;
-}
-.colDetected {
-  width: 160px;
-}
-.colStatus {
-  width: 88px;
-}
-.colInvestigation {
   width: 112px;
 }
-/* An outdated investigation is a state the reader should notice. */
-.outdated {
-  color: var(--warn);
+.colStatus {
+  width: 104px;
+}
+.colInvestigation {
+  width: 128px;
+}
+.title {
+  min-width: 240px;
 }
