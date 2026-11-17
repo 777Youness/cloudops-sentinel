@@ -3,7 +3,10 @@
 Automated tests never call a real LLM (CLAUDE.md). Runs against a real provider are done
 by hand and saved here, so the behaviour of real models stays reviewable.
 
-No run has been recorded yet.
+Recorded runs:
+- [2026-11-17-gpt-oss-20b-INC-0001.json](2026-11-17-gpt-oss-20b-INC-0001.json): the real-AWS
+  5xx incident investigated by GroqCloud `openai/gpt-oss-20b`, with prompt v1 (an
+  unsupported high-confidence causal claim) and prompt v2 (correlation stated as such).
 
 ## Reliability cases A-E (any configured provider)
 

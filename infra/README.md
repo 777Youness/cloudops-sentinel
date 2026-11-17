@@ -9,9 +9,11 @@ Status (reported by the owner, 2026-11-17): the full configuration, **19 resourc
 including Sentinel's read-only role, was applied in eu-west-3; the app answered HTTP 200;
 Sentinel assumed the role and all three collectors succeeded (7/7 signals, 1 resource, 7
 rules, no incident because the workload was healthy); `terraform destroy` removed the 19
-resources and the state is empty. Nothing is running now. The demo fault route (section 8,
-ADR 0019) is new and **not yet run on AWS**. **The safety timer is still UNTESTED**: no run
-has shown the instance terminating itself.
+resources and the state is empty. The 5xx demo (section 8, ADR 0019) was then run once: a
+real high-severity R-5XX incident (peak 21.1%), followed by `terraform destroy` (19
+resources) and a clean `cost-check.sh`. Nothing is running now. Resolution on AWS (step 7)
+was not observed. **The safety timer is still UNTESTED**: no run has shown the instance
+terminating itself.
 
 ```
 infra/
@@ -205,7 +207,7 @@ attributes (including the rendered user_data), so treat it as sensitive. Keep it
    "Verification", for the expected first-run surprises.
 5. `terraform destroy` and `cost-check.sh` at the end, as always.
 
-## 8. Demonstrate a real 5xx incident (Day 5b, ADR 0019; not yet run on AWS)
+## 8. Demonstrate a real 5xx incident (Day 5b, ADR 0019; run once on AWS, step 7 not observed)
 Shows the whole chain: EC2 app → access log → CloudWatch Logs → Logs Insights → R-5XX →
 SQLite incident → console → investigation. Same thresholds as always; about 25 minutes;
 a few kB of logs on top of the usual instance hours (`docs/cost.md`).
