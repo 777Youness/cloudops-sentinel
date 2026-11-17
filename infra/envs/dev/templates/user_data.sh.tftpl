@@ -64,6 +64,8 @@ Wants=network-online.target
 User=cloudops-workload
 Environment=WORKLOAD_PORT=${app_port}
 Environment=WORKLOAD_ACCESS_LOG=${access_log_path}
+# Demo fault route GET /fault/500 ("1" = on, dev only, ADR 0019).
+Environment=WORKLOAD_FAULTS_ENABLED=${faults_enabled}
 ExecStart=/usr/bin/python3 /opt/cloudops-workload/app.py
 Restart=on-failure
 

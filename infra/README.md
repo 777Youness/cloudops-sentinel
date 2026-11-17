@@ -5,11 +5,13 @@ on your machine (ADR 0001). Decisions: [ADR 0016](../docs/adr/0016-dev-workload-
 [ADR 0017](../docs/adr/0017-workload-deployment-operator-access-and-safety-timer.md).
 Costs: [docs/cost.md](../docs/cost.md).
 
-Status: **applied once by the owner** before 2026-11-17: 17 resources created in eu-west-3,
-the app answered HTTP 200 on `/health`, and `terraform destroy` ended with an empty state.
-Nothing is running now. Since then (Day 5) Terraform also defines **Sentinel's read-only
-role** (2 more resources, **not applied yet**). **The safety timer is still UNTESTED**: no
-run has shown the instance terminating itself.
+Status (reported by the owner, 2026-11-17): the full configuration, **19 resources**
+including Sentinel's read-only role, was applied in eu-west-3; the app answered HTTP 200;
+Sentinel assumed the role and all three collectors succeeded (7/7 signals, 1 resource, 7
+rules, no incident because the workload was healthy); `terraform destroy` removed the 19
+resources and the state is empty. Nothing is running now. The demo fault route (section 8,
+ADR 0019) is new and **not yet run on AWS**. **The safety timer is still UNTESTED**: no run
+has shown the instance terminating itself.
 
 ```
 infra/
@@ -189,7 +191,7 @@ attributes (including the rendered user_data), so treat it as sensitive. Keep it
 `scripts/cost-check.sh` and delete them in the console, or `terraform import` them first
 (ADR 0016, "State backup and recovery limitations").
 
-## 7. Sentinel in aws mode (Day 5, ADR 0018; not yet run against AWS)
+## 7. Sentinel in aws mode (Day 5, ADR 0018; validated once by the owner)
 1. Workload applied (section 3) and the assume policy attached (section 1).
 2. `aws login --profile sentinel-login`, then check the `sentinel` profile (section 2).
 3. From `backend/`:
@@ -202,3 +204,65 @@ attributes (including the rendered user_data), so treat it as sensitive. Keep it
    `partial` sync names the failed collector and its error code; see ADR 0018,
    "Verification", for the expected first-run surprises.
 5. `terraform destroy` and `cost-check.sh` at the end, as always.
+
+## 8. Demonstrate a real 5xx incident (Day 5b, ADR 0019; not yet run on AWS)
+Shows the whole chain: EC2 app → access log → CloudWatch Logs → Logs Insights → R-5XX →
+SQLite incident → console → investigation. Same thresholds as always; about 25 minutes;
+a few kB of logs on top of the usual instance hours (`docs/cost.md`).
+
+**Commands are PowerShell** (Windows). Three terminals: A for Terraform, B for the
+backend, C for the console; the traffic runs in A after the apply.
+
+1. **Deploy** (terminal A, from `infra/envs/dev`; `fault_injection_enabled` defaults to
+   `true` in dev):
+   ```powershell
+   aws login --profile sentinel-login
+   $env:AWS_PROFILE = "sentinel-terraform"
+   terraform plan -out=tfplan
+   terraform apply tfplan
+   terraform output -raw app_url
+   ```
+   Wait about 3 minutes for the bootstrap, then check the app from your machine:
+   `curl.exe <app_url>health` must print `ok`, and `curl.exe <app_url>fault/500` must
+   answer `injected fault (demo)` (HTTP 500).
+2. **Start Sentinel in aws mode** (terminal B, from `backend/`). Optional clean slate: stop
+   the backend and delete `backend\data\sentinel-aws.db` first, so old demo incidents do
+   not stay listed.
+   ```powershell
+   $env:SENTINEL_MODE = "aws"
+   $env:SENTINEL_AWS_PROFILE = "sentinel"
+   uv run uvicorn sentinel.main:app --host 127.0.0.1 --port 8000
+   ```
+   Terminal C, from `frontend/`: `npm run dev`, open http://127.0.0.1:5173.
+3. **Healthy baseline**: click **Sync now**. Expect `success`, three `ok` collectors, no
+   incident.
+4. **Error traffic** (terminal A, from the repository root):
+   ```powershell
+   python scripts/demo_traffic.py --url (terraform -chdir=infra/envs/dev output -raw app_url) --mode errors --minutes 14
+   ```
+   It prints one line per minute (about 48 `ok` and 12 `fault_500` each) and
+   `<- sync now` at minute 9.
+5. **Detect**: at minute 9 or later, while the traffic still runs, click **Sync now**.
+   Expected: one incident, **R-5XX, severity high**, `data_origin` aws, a fact like
+   "5xx error rate at or above 5% for 6 min since 10:00 UTC (peak 20.0%)" (your
+   times and duration), latency checked and normal,
+   possibly data gaps (memory, if the agent's metric is late). Open it: the error-rate
+   chart shows the breach window.
+6. **Investigate**: in the workspace, click **Run investigation** (the mock provider by
+   default; Ollama if configured, ADR 0015). Every hypothesis cites the R-5XX fact.
+7. **Recover**: when the error traffic ends, run
+   `python scripts/demo_traffic.py --url (terraform -chdir=infra/envs/dev output -raw app_url) --mode healthy --minutes 15`
+   and sync again after minute 13: the incident resolves (10 clean minutes are required).
+8. **Clean up** (terminal A, from `infra/envs/dev`): `terraform destroy`, then
+   `bash ../../scripts/cost-check.sh` (exit code 0). Stop the backend and the console.
+
+**If something does not happen**
+
+| Symptom | Likely cause | Check |
+|---|---|---|
+| `curl` times out | your public IP changed, so `operator_cidr` no longer matches | update `terraform.tfvars`, apply again |
+| `/fault/500` answers 404 | fault injection disabled | `terraform output` / `fault_injection_enabled`; changing it replaces the instance |
+| Sync shows no incident at minute 9 | logs not yet ingested, or a pause broke the run | wait 2 minutes and sync again; the traffic must be continuous |
+| `cloudwatch_logs` failed | Logs Insights permission or timeout | the error code and hint on the System page (ADR 0018) |
+| No error rate at all | the agent is not shipping the log | Session Manager: `systemctl status amazon-cloudwatch-agent`, `tail /var/log/cloudops-workload/access.log` |
+| Severity medium, not high | fewer than 5 minutes at >= 5 % (for example `--error-every 30`) | keep the default `--error-every 5` |

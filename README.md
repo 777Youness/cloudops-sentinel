@@ -6,11 +6,13 @@ Sentinel collects operational telemetry, detects incidents with deterministic ru
 asks an LLM (on demand) to write an investigation in which every hypothesis must cite facts
 the code collected. Severity is rule-based. Humans decide on remediation.
 
-> **Status: V1 in progress — Day 5 (AWS mode).** The AWS collector is implemented and
-> tested with mocked AWS responses; it has **not yet run against a real account**. The
-> workload Terraform was applied once by the owner (17 resources, `/health` answered 200,
-> `terraform destroy` left an empty state); the EC2 safety timer is **not yet validated**.
-> The Resources pages are not built yet. See [docs/architecture.md](docs/architecture.md).
+> **Status: V1 in progress — Day 5b (real-AWS incident demo).** AWS mode ran against a
+> real deployment (reported by the owner): 19 resources applied in eu-west-3, the read-only
+> role assumed, all three collectors succeeded with 7/7 signals, no incident on a healthy
+> workload, then everything destroyed. The demo fault route and traffic script
+> ([ADR 0019](docs/adr/0019-dev-fault-injection-for-the-5xx-demo.md)) are tested locally,
+> **not yet on AWS**. The EC2 safety timer is **not yet validated**. The Resources pages are
+> not built yet. See [docs/architecture.md](docs/architecture.md).
 
 ## What works today
 
@@ -99,7 +101,7 @@ CLAUDE.md   rules for AI-assisted development in this repository
 See [docs/adr](docs/adr). Key ones: Sentinel runs locally for V1 (0001), a pure detection
 core with enforced import rules (0002), only the sync collects data (0003), rule-based
 severity (0004), generated API types (0010), SQLite document store (0013), investigation
-provider (0015), AWS collector (0018).
+provider (0015), AWS collector (0018), dev-only fault injection for the demo (0019).
 
 ## Acknowledgements
 

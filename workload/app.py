@@ -14,8 +14,15 @@ Only the path is logged, never the query string or headers: log lines become evi
 is sent to an LLM (CLAUDE.md section 7), so they must not carry anything a client typed.
 
 Configuration (environment variables):
-    WORKLOAD_PORT        TCP port, default 8080
-    WORKLOAD_ACCESS_LOG  access log file, default /var/log/cloudops-workload/access.log
+    WORKLOAD_PORT            TCP port, default 8080
+    WORKLOAD_ACCESS_LOG      access log file, default /var/log/cloudops-workload/access.log
+    WORKLOAD_FAULTS_ENABLED  "1" enables the demo fault route; anything else (or unset)
+                             keeps it disabled. Only the dev Terraform workload sets it.
+
+Fault injection (Day 5b, ADR 0019): GET /fault/500 answers HTTP 500 and is logged like any
+other request, so a real 5xx travels the real path (access log -> CloudWatch agent ->
+Logs Insights -> Sentinel). It takes no input, runs nothing, reads nothing and changes
+nothing: a fixed status and a fixed body. Disabled, the path is an ordinary 404.
 """
 
 from __future__ import annotations
@@ -60,11 +67,25 @@ class AccessLog:
             f.write(line + "\n")
 
 
-def handle(path: str) -> tuple[int, str]:
-    """The routes. Returns (status, body). Fault injection arrives with Day 4c scripts."""
+FAULT_PATH = "/fault/500"
+
+
+def handle(path: str, faults_enabled: bool = False) -> tuple[int, str]:
+    """The routes. Returns (status, body). Pure: no I/O, no input beyond the path."""
     if path in ("/", "/health"):
         return 200, "ok\n"
+    if path == FAULT_PATH and faults_enabled:
+        return 500, "injected fault (demo)\n"
     return 404, "not found\n"
+
+
+def faults_enabled_from_env(environ=os.environ) -> bool:
+    """Exactly "1" enables faults: a typo or an empty value keeps them off."""
+    return environ.get("WORKLOAD_FAULTS_ENABLED", "") == "1"
+
+
+def make_route(faults_enabled: bool):
+    return lambda path: handle(path, faults_enabled)
 
 
 def make_handler(access_log: AccessLog, route=handle):
@@ -107,7 +128,7 @@ def build_server(
 def main() -> None:
     port = int(os.environ.get("WORKLOAD_PORT", str(DEFAULT_PORT)))
     access_log_path = os.environ.get("WORKLOAD_ACCESS_LOG", DEFAULT_ACCESS_LOG)
-    server = build_server(port, access_log_path)
+    server = build_server(port, access_log_path, make_route(faults_enabled_from_env()))
     try:
         server.serve_forever()
     finally:
