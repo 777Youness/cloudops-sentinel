@@ -3,6 +3,8 @@
  * Everything here is inferred, so it is styled as such (docs/design-system.md,
  * "Investigation panel"). Nothing on this panel acts on anything: remediation is text.
  */
+import { Sparkles } from 'lucide-react';
+
 import { ApiError } from '../../api/client';
 import type { Incident, InvestigationResult } from '../../api/types';
 import { Button } from '../../components/Button';
@@ -170,7 +172,12 @@ export function InvestigationPanel({ incident }: { incident: Incident }) {
   const unavailable = llm !== undefined && !llm.configured;
 
   const runButton = (label: string) => (
-    <Button onClick={() => run.mutate()} disabled={run.isPending || unavailable}>
+    <Button
+      variant="soft"
+      icon={<Sparkles />}
+      onClick={() => run.mutate()}
+      disabled={run.isPending || unavailable}
+    >
       {run.isPending ? `Investigating… ${elapsed} s` : label}
     </Button>
   );

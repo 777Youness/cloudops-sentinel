@@ -1,8 +1,15 @@
 /* Encoding: docs/design-system.md, "Charts". SVG colors are set here (CSS overrides the
    presentation attributes recharts writes), so charts use tokens like everything else. */
 .chart {
-  padding: var(--sp-3) 0 var(--sp-2);
-  border-bottom: var(--rule);
+  padding: var(--sp-4) 0 var(--sp-3);
+  border-bottom: var(--rule-dashed);
+}
+.chart:first-child {
+  padding-top: 0;
+}
+.chart:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 .head {
   display: flex;
@@ -12,7 +19,7 @@
   padding: 0 var(--sp-4) var(--sp-2) 0;
 }
 .title {
-  font-weight: var(--fw-semibold);
+  font-weight: var(--fw-bold);
   color: var(--text-1);
 }
 .meta {
@@ -53,16 +60,18 @@
 }
 .grid :global(line) {
   stroke: var(--border);
+  stroke-dasharray: 3 3;
 }
 
 /* The series */
 .line :global(path),
 .line:global(.recharts-curve) {
   stroke: var(--text-1);
+  stroke-width: 2px;
 }
 .activeDot {
   fill: var(--text-1);
-  stroke: var(--bg);
+  stroke: var(--surface);
 }
 .cursor {
   stroke: var(--border-strong);
@@ -116,10 +125,10 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--sp-1) var(--sp-2);
-  background: var(--raised);
-  border: var(--rule-strong);
-  border-radius: var(--radius-1);
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--surface);
+  border: var(--rule);
+  border-radius: var(--radius-2);
   box-shadow: var(--shadow-overlay);
   font-size: var(--fs-12);
   color: var(--text-1);

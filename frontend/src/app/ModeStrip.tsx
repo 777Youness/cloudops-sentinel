@@ -1,3 +1,5 @@
+import { FlaskConical } from 'lucide-react';
+
 import { useSystem } from '../features/system/api';
 import styles from './ModeStrip.module.css';
 
@@ -7,6 +9,7 @@ export function ModeStrip() {
   if (data?.mode !== 'local') return null;
   return (
     <div className={styles.strip} role="note">
+      <FlaskConical aria-hidden="true" />
       Simulated data. Scenarios are replayed locally; nothing on this screen comes from AWS.
     </div>
   );

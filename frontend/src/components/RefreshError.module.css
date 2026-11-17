@@ -1,11 +1,12 @@
 .banner {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-4);
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 2px solid var(--crit);
-  background: var(--surface);
-  color: var(--text-1);
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-2);
+  background: var(--crit-tint);
+  color: var(--crit-text);
+  font-weight: var(--fw-medium);
 }

@@ -1,27 +1,37 @@
 .state {
-  padding: var(--sp-6) var(--sp-4);
-  border-bottom: var(--rule);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-1);
+  padding: var(--sp-8) var(--sp-6);
 }
 .state > * {
   max-width: 72ch;
 }
 .error {
-  border-left: 2px solid var(--crit);
+  margin: var(--sp-2) 0;
+  border-radius: var(--radius-2);
+  background: var(--crit-tint);
 }
 .title {
-  font-size: var(--fs-14);
-  font-weight: var(--fw-semibold);
+  font-size: var(--fs-16);
+  font-weight: var(--fw-bold);
   color: var(--text-1);
 }
 .detail {
-  margin-top: var(--sp-1);
-  color: var(--text-2);
-}
-.code {
-  margin-top: var(--sp-2);
-  font-size: var(--fs-12);
   color: var(--text-3);
 }
+.error .title {
+  color: var(--crit-text);
+}
+.error .detail {
+  color: var(--text-1);
+}
+.code {
+  margin-top: var(--sp-1);
+  font-size: var(--fs-12);
+  color: var(--text-2);
+}
 .action {
-  margin-top: var(--sp-4);
+  margin-top: var(--sp-3);
 }

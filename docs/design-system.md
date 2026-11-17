@@ -2,28 +2,35 @@
 
 Tokens are implemented in `frontend/src/styles/tokens.css`. Components use tokens only.
 
+Visual language since ADR 0020: a light, card-based dashboard inspired by the MIT-licensed
+Minimal UI kit (no code, components or assets copied; no UI library). Sentinel keeps its
+own identity: IBM Plex, "Sentinel blue" accent, the shield mark.
+
 ## Principles
 
-1. Borders and typography structure the page; boxes are rare.
-2. Color means state, never decoration.
+1. White cards on a light page group content; one level only (no card inside a card).
+2. Color means state, never decoration. The accent is never a status.
 3. Solid means observed; dashed means inferred (from Day 3).
 4. Every number carries a unit and, where useful, a comparison.
 5. Every view designs its loading, empty, error and stale states.
+6. Every text color meets WCAG AA (4.5:1) on its background.
 
 ## Tokens
 
 | Group | Values |
 |---|---|
-| Backgrounds | `--bg #0F1113`, `--surface #15181B`, `--raised #1B1F23` |
-| Borders | `--border #262B30`, `--border-strong #343A41` |
-| Text | `--text-1 #E4E6E8`, `--text-2 #A2A9B1`, `--text-3 #7D858E` |
-| Accent | `--accent #6FA3D9`: selection, links, focus, deployment markers. Never a status. |
-| State | `--ok #3FAE7A`, `--warn #D9A13B`, `--crit #E0584F`, `--unknown #7A828B`, 12% tints |
-| Type | IBM Plex Sans (UI), IBM Plex Mono with tabular figures (numbers, IDs, timestamps). Sizes 11/12/13 (body)/14/16/20/24; weights 400/500/600 |
-| Spacing | 4, 8, 12, 16, 24, 32, 48. Page padding 24. Table rows 36 px |
-| Radius | 2 px; 4 px maximum |
-| Elevation | None on content; one overlay shadow |
-| Motion | 120 ms color/opacity transitions; respects `prefers-reduced-motion` |
+| Backgrounds | `--bg #F6F7F9` (page), `--surface #FFFFFF` (cards, sidebar), `--raised #F2F4F7` (table heads, hover, fills) |
+| Borders | `--border` / `--border-strong`: grey 145 158 171 at 20 % / 36 %; dashed rules separate rows inside cards |
+| Text | `--text-1 #1C252E` (15.5:1), `--text-2 #454F5B` (8.5:1), `--text-3 #637381` (4.9:1) |
+| Accent | `--accent #0C68E9` "Sentinel blue" (5.0:1), `--accent-strong #0351AB`, 8 % / 16 % tints: selection, links, focus, deployment markers. Never a status. |
+| State | Marks: `--ok #22C55E`, `--warn #FFAB00`, `--crit #FF5630`, `--info #00B8D9`, `--unknown #919EAB`. Words: `--ok-text #065E49`, `--warn-text #7A4100`, `--crit-text #B71D18`, `--info-text #006C9C`. 16 % tints for soft labels |
+| Primary action | `--action #1C252E` with white text (one per view: Sync now) |
+| Type | IBM Plex Sans (UI), IBM Plex Mono with tabular figures (numbers, IDs, timestamps). Sizes 11/12/13/14 (body)/16/18 (card titles)/20/24 (page titles)/32 (metric values); weights 400/500/600/700 |
+| Spacing | 4, 8, 12, 16, 20, 24, 32, 40, 48. Page padding 40 (16 on phones). Table rows 52 px |
+| Radius | 6 px labels, 8 px buttons and nav items, 16 px cards |
+| Elevation | `--shadow-card` under cards; `--shadow-overlay` for the drawer and tooltips. No other shadows |
+| Icons | lucide-react, only in navigation, metric cards and buttons, always next to text (`aria-hidden`) |
+| Motion | 150 ms color/background transitions; respects `prefers-reduced-motion` |
 
 ## Amendments (Day 1)
 
@@ -37,11 +44,11 @@ Checked against common generic-UI tells and changed from the first spec:
 
 | Value | Encoding |
 |---|---|
-| Critical | Filled red tag, text "Critical" |
-| High | Red outline tag, text "High" |
-| Medium | Amber outline tag, text "Medium" |
-| Low | Neutral outline tag, text "Low" |
-| Row edge | 3 px bar in the severity color on the first cell |
+| Critical | Filled dark red label, white text "Critical" |
+| High | Soft red label, text "High" |
+| Medium | Soft amber label, text "Medium" |
+| Low | Soft grey label, text "Low" |
+| Row edge | 4 px bar in the severity color on the first cell (Incidents table) |
 
 Severity is always text plus color, never color alone.
 

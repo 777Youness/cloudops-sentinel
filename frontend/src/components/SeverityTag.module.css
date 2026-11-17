@@ -1,28 +1,30 @@
+/* Severity is always a word; tone and fill reinforce it (critical is the only filled one). */
 .tag {
-  display: inline-block;
-  min-width: 64px;
-  padding: 1px var(--sp-2);
-  border: 1px solid;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  height: 24px;
+  padding: 0 var(--sp-2);
   border-radius: var(--radius-1);
   font-size: var(--fs-12);
-  font-weight: var(--fw-semibold);
-  line-height: 18px;
-  text-align: center;
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  white-space: nowrap;
 }
 .critical {
-  background: var(--crit);
-  border-color: var(--crit);
-  color: var(--bg);
+  background: var(--crit-strong);
+  color: var(--text-on-strong);
 }
 .high {
-  border-color: var(--crit);
-  color: var(--crit);
+  background: var(--crit-tint);
+  color: var(--crit-text);
 }
 .medium {
-  border-color: var(--warn);
-  color: var(--warn);
+  background: var(--warn-tint);
+  color: var(--warn-text);
 }
 .low {
-  border-color: var(--border-strong);
-  color: var(--text-2);
+  background: var(--unknown-tint);
+  color: var(--unknown-text);
 }

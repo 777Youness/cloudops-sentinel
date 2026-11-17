@@ -2,11 +2,15 @@
  * Investigation workspace (docs/screens.md): everything stored for one incident.
  * Day 2c shows evidence only; the investigation sections arrive with Day 3.
  */
+import { ChevronLeft } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 
 import { ApiError } from '../../api/client';
 import type { Incident } from '../../api/types';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
+import { Label } from '../../components/Label';
+import { PageHeader } from '../../components/PageHeader';
 import { RefreshError } from '../../components/RefreshError';
 import { SeverityTag } from '../../components/SeverityTag';
 import { EmptyState, ErrorState } from '../../components/StateMessage';
@@ -38,60 +42,73 @@ function When({ iso, now }: { iso: string; now: number }) {
 
 function Header({ incident, now }: { incident: Incident; now: number }) {
   return (
-    <header className={styles.header}>
-      <Link to="/incidents" className={styles.back}>
-        Incidents
-      </Link>
-      <div className={styles.titleRow}>
-        <h1 id="workspace-title" className={styles.h1}>
-          {incident.title}
-        </h1>
-        <SeverityTag severity={incident.severity} />
-        <span className={incident.status === 'open' ? styles.statusOpen : styles.statusResolved}>
-          {incident.status === 'open' ? 'Open' : 'Resolved'}
-        </span>
-      </div>
-      <dl className={styles.meta}>
-        <div>
-          <dt>Incident</dt>
-          <dd className="mono">{incident.id}</dd>
-        </div>
-        <div>
-          <dt>Resource</dt>
-          <dd>
-            {incident.resource_name} <span className="mono">{incident.resource_id}</span>
-          </dd>
-        </div>
-        <div>
-          <dt>Region</dt>
-          <dd className="mono">{incident.region}</dd>
-        </div>
-        <div>
-          <dt>First detected</dt>
-          <dd>
-            <When iso={incident.first_detected_at} now={now} />
-          </dd>
-        </div>
-        <div>
-          <dt>Last updated</dt>
-          <dd>
-            <When iso={incident.last_updated_at} now={now} />
-          </dd>
-        </div>
-        {incident.resolved_at && (
+    <>
+      <PageHeader
+        titleId="workspace-title"
+        eyebrow={
+          <Link to="/incidents" className={styles.back}>
+            <ChevronLeft aria-hidden="true" />
+            Incidents
+          </Link>
+        }
+        title={incident.title}
+        action={
+          // Outside the h1, so the heading's accessible name is the incident title alone.
+          <>
+            <SeverityTag severity={incident.severity} />
+            <Label tone={incident.status === 'open' ? 'neutral' : 'ok'}>
+              {incident.status === 'open' ? 'Open' : 'Resolved'}
+            </Label>
+          </>
+        }
+      />
+      <div className={styles.metaCard}>
+        <dl className={styles.meta}>
           <div>
-            <dt>Resolved</dt>
+            <dt>Incident</dt>
+            <dd className="mono">{incident.id}</dd>
+          </div>
+          <div>
+            <dt>Resource</dt>
             <dd>
-              <When iso={incident.resolved_at} now={now} />
+              {incident.resource_name} <span className="mono">{incident.resource_id}</span>
             </dd>
           </div>
-        )}
-        <div>
-          <dt>Data</dt>
-          <dd>{incident.data_origin === 'simulated' ? 'Simulated' : 'AWS'}</dd>
-        </div>
-      </dl>
-    </header>
+          <div>
+            <dt>Region</dt>
+            <dd className="mono">{incident.region}</dd>
+          </div>
+          <div>
+            <dt>First detected</dt>
+            <dd>
+              <When iso={incident.first_detected_at} now={now} />
+            </dd>
+          </div>
+          <div>
+            <dt>Last updated</dt>
+            <dd>
+              <When iso={incident.last_updated_at} now={now} />
+            </dd>
+          </div>
+          {incident.resolved_at && (
+            <div>
+              <dt>Resolved</dt>
+              <dd>
+                <When iso={incident.resolved_at} now={now} />
+              </dd>
+            </div>
+          )}
+          <div>
+            <dt>Data</dt>
+            <dd>
+              <Label tone={incident.data_origin === 'simulated' ? 'warn' : 'accent'}>
+                {incident.data_origin === 'simulated' ? 'Simulated' : 'AWS'}
+              </Label>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </>
   );
 }
 
@@ -169,18 +186,22 @@ export function WorkspacePage() {
   if (incident.isError && !incident.data) {
     if (incident.error instanceof ApiError && incident.error.status === 404) {
       return (
-        <EmptyState
-          title={`Incident ${id} not found.`}
-          detail="There is no incident with this ID in the local history."
-          action={<Link to="/incidents">Back to incidents</Link>}
-        />
+        <Card>
+          <EmptyState
+            title={`Incident ${id} not found.`}
+            detail="There is no incident with this ID in the local history."
+            action={<Link to="/incidents">Back to incidents</Link>}
+          />
+        </Card>
       );
     }
     return (
-      <ErrorState
-        error={incident.error}
-        action={<Button onClick={() => incident.refetch()}>Retry</Button>}
-      />
+      <Card>
+        <ErrorState
+          error={incident.error}
+          action={<Button onClick={() => incident.refetch()}>Retry</Button>}
+        />
+      </Card>
     );
   }
 
@@ -193,18 +214,16 @@ export function WorkspacePage() {
       <Header incident={data} now={now} />
       <div className={styles.layout}>
         <div className={styles.main}>
-          <section aria-labelledby="signals-title">
-            <h2 id="signals-title" className={styles.h2}>
-              Signals
-            </h2>
+          <Card
+            title="Signals"
+            titleId="signals-title"
+            subheader="The series stored with the incident: what detection saw"
+          >
             <Charts incident={data} />
-          </section>
-          <section aria-labelledby="timeline-title">
-            <h2 id="timeline-title" className={styles.h2}>
-              Timeline
-            </h2>
+          </Card>
+          <Card title="Timeline" titleId="timeline-title">
             <Timeline entries={data.timeline} now={now} />
-          </section>
+          </Card>
         </div>
         <aside className={styles.aside} aria-label="Evidence">
           <EvidencePanel incident={data} />

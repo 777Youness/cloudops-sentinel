@@ -3,96 +3,96 @@
   flex-direction: column;
   gap: var(--sp-6);
 }
-.header {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
 .back {
-  font-size: var(--fs-12);
-}
-.titleRow {
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-flex;
   align-items: center;
-  gap: var(--sp-3);
-}
-.h1 {
-  font-size: var(--fs-20);
+  gap: 2px;
+  color: var(--text-3);
   font-weight: var(--fw-semibold);
-  line-height: var(--lh-tight);
 }
-.statusOpen,
-.statusResolved {
-  font-size: var(--fs-12);
-  font-weight: var(--fw-medium);
+.back :global(svg) {
+  width: 18px;
+  height: 18px;
 }
-.statusOpen {
+.back:hover {
   color: var(--text-1);
+  text-decoration: none;
 }
-.statusResolved {
-  color: var(--ok);
+
+/* Incident metadata: one card, key-value pairs in a responsive grid. */
+.metaCard {
+  padding: var(--sp-5) var(--sp-6);
+  border-radius: var(--radius-3);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 .meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-6);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--sp-4) var(--sp-6);
 }
 .meta > div {
   display: flex;
-  gap: var(--sp-2);
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 .meta dt {
+  font-size: var(--fs-12);
+  font-weight: var(--fw-semibold);
   color: var(--text-3);
+}
+.meta dd {
+  color: var(--text-1);
+  font-weight: var(--fw-medium);
+  overflow-wrap: anywhere;
 }
 .meta dd .mono {
   color: var(--text-2);
+  font-weight: var(--fw-regular);
 }
 .relative {
   font-size: var(--fs-12);
   color: var(--text-3);
 }
 
-/* Evidence column (charts, timeline) + sticky 400 px panel. */
+/* Evidence column (charts, timeline) + sticky panel column. */
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 400px;
-  gap: var(--sp-8);
+  grid-template-columns: minmax(0, 1fr) 420px;
+  gap: var(--sp-6);
   align-items: start;
 }
 .main {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-8);
+  gap: var(--sp-6);
   min-width: 0;
 }
 .aside {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-8);
+  gap: var(--sp-6);
   position: sticky;
-  top: var(--sp-6);
-  max-height: calc(100vh - var(--sp-12));
+  top: calc(var(--topbar-height) + var(--sp-4));
+  max-height: calc(100vh - var(--topbar-height) - var(--sp-8));
   overflow-y: auto;
-  padding-left: var(--sp-6);
-  border-left: var(--rule);
-}
-.h2 {
-  margin-bottom: var(--sp-2);
-  font-size: var(--fs-14);
-  font-weight: var(--fw-semibold);
+  padding: 2px 4px 4px; /* room for the cards' shadows inside the scroll box */
+  margin: -2px -4px 0;
 }
 .charts {
-  border-top: var(--rule-strong);
+  display: flex;
+  flex-direction: column;
 }
 .other {
   margin-top: var(--sp-4);
+  border-top: var(--rule-dashed);
 }
 .other summary {
   cursor: pointer;
-  padding: var(--sp-2) 0;
+  padding: var(--sp-3) 0;
   color: var(--text-2);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-semibold);
 }
 .muted {
   color: var(--text-3);
@@ -103,38 +103,33 @@
 .skeletonMeta,
 .skeletonChart,
 .skeletonPanel {
-  border-radius: var(--radius-1);
-  background: var(--raised);
+  border-radius: var(--radius-3);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
   animation: pulse 1.4s ease-in-out infinite;
 }
 .skeletonTitle {
   width: 40%;
-  height: 24px;
-  margin-bottom: var(--sp-3);
+  height: 32px;
+  margin-bottom: var(--sp-4);
+  border-radius: var(--radius-2);
+  box-shadow: none;
+  background: var(--raised);
 }
 .skeletonMeta {
-  width: 70%;
-  height: 12px;
-  margin-bottom: var(--sp-8);
+  height: 88px;
+  margin-bottom: var(--sp-6);
 }
 .skeletonChart {
-  height: 136px;
-  margin-bottom: var(--sp-3);
+  height: 160px;
+  margin-bottom: var(--sp-4);
 }
 .skeletonPanel {
-  height: 320px;
+  height: 360px;
 }
 @keyframes pulse {
   50% {
-    opacity: 0.5;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .skeletonTitle,
-  .skeletonMeta,
-  .skeletonChart,
-  .skeletonPanel {
-    animation: none;
+    opacity: 0.55;
   }
 }
 
@@ -145,7 +140,8 @@
   .aside {
     position: static;
     max-height: none;
-    padding-left: 0;
-    border-left: none;
+    overflow: visible;
+    padding: 0;
+    margin: 0;
   }
 }

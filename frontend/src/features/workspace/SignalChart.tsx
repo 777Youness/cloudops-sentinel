@@ -186,7 +186,7 @@ export function SignalChart({
               domain={y.domain}
               ticks={y.ticks}
               tickFormatter={(v: number) => tickValue(v, series.unit, isStatus)}
-              width={64}
+              width={72}
               tickLine={false}
               axisLine={false}
               className={styles.axis}

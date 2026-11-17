@@ -1,14 +1,15 @@
 .notice {
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 2px solid var(--warn);
-  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius-2);
+  background: var(--warn-tint);
+  color: var(--warn-text);
 }
 .title {
-  font-weight: var(--fw-medium);
-  color: var(--text-1);
+  font-weight: var(--fw-bold);
 }
 .detail {
-  font-size: var(--fs-12);
-  color: var(--text-2);
+  font-size: var(--fs-13);
 }

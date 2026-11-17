@@ -1,26 +1,57 @@
 .timeline {
-  border-top: var(--rule-strong);
+  display: flex;
+  flex-direction: column;
 }
+/* A vertical rail with one dot per entry. */
 .entry {
+  position: relative;
   display: grid;
-  grid-template-columns: 80px 96px minmax(0, 1fr) auto;
+  grid-template-columns: 84px 104px minmax(0, 1fr) auto;
   gap: var(--sp-3);
   align-items: baseline;
-  min-height: var(--row-height);
-  padding: var(--sp-2) 0;
-  border-bottom: var(--rule);
+  padding: var(--sp-3) 0 var(--sp-3) var(--sp-6);
+}
+.entry::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 0;
+  bottom: 0;
+  border-left: var(--rule-strong);
+}
+.entry::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(var(--sp-3) + 5px);
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-round);
+  background: var(--text-3);
+}
+.entry:first-child::before {
+  top: calc(var(--sp-3) + 6px);
+}
+.entry:last-child::before {
+  bottom: auto;
+  height: calc(var(--sp-3) + 6px);
 }
 .time {
   color: var(--text-1);
+  font-weight: var(--fw-semibold);
 }
 .kind {
   font-size: var(--fs-12);
-  font-weight: var(--fw-medium);
+  font-weight: var(--fw-bold);
   color: var(--text-2);
 }
 /* Deployments use the accent, as their markers on the charts do. */
 .deploy .kind {
   color: var(--accent);
+}
+.deploy::after {
+  background: var(--accent);
 }
 .label {
   color: var(--text-1);
@@ -33,4 +64,12 @@
   font-size: var(--fs-12);
   color: var(--text-3);
   white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .entry {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+  .label {
+    grid-column: 1 / -1;
+  }
 }

@@ -1,0 +1,34 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.text {
+  min-width: 0;
+}
+.eyebrow {
+  margin-bottom: var(--sp-2);
+  font-size: var(--fs-14);
+}
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  font-size: var(--fs-24);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--text-1);
+}
+.description {
+  margin-top: var(--sp-1);
+  color: var(--text-3);
+}
+.action {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
