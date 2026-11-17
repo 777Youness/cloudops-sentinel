@@ -1,0 +1,15 @@
+# Only pyproject.toml, uv.lock, sentinel/ and scenarios/ are needed in the image.
+# Never send local databases, secrets or environments to the build.
+data/
+*.db
+*.db-*
+.env
+.env.*
+.venv/
+tests/
+evals/
+**/__pycache__/
+.pytest_cache/
+.ruff_cache/
+Dockerfile
+.dockerignore

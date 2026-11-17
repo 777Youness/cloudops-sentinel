@@ -279,6 +279,19 @@ Tested end to end with mocked AWS in `tests/aws/test_demo_5xx_incident.py`, incl
 negative cases: 4 minutes is not enough, a missing minute breaks the run, and the same 20 %
 on 5 requests per minute does not alert.
 
+### C9. Docker Compose (LOCAL, runtime-tested on Docker Desktop)
+1. `frontend`: a multi-stage image (Node builds, Nginx serves). Nginx answers every client
+   route with `index.html` and forwards `/api/` to `backend:8000`: one origin, no CORS,
+   like the Vite dev proxy. Docker's DNS is re-asked so a recreated backend is found.
+2. `backend`: dependencies from `uv.lock` (`--locked --no-dev`), source tree copied as is
+   (config finds `scenarios/` next to the package), non-root, read-only root filesystem,
+   all capabilities dropped. Not published: only Nginx is reachable, on 127.0.0.1.
+3. SQLite lives in a named volume: `down` and rebuilds keep it, `down --volumes` deletes it.
+4. The mode is pinned to `local` and no credentials are mounted: the container cannot
+   reach AWS. An LLM key is a runtime variable from `.env.docker`, never in an image.
+Files: `compose.yaml`, `backend/Dockerfile`, `frontend/Dockerfile`, `frontend/nginx.conf`.
+Test: `scripts/docker_smoke.py`.
+
 ---
 
 ## D. Decisions and trade-offs

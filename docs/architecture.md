@@ -62,7 +62,21 @@ POST /api/v1/sync
 ```
 
 Storage: SQLite, one file per mode (`backend/data/sentinel-<mode>.db`), models stored as
-JSON documents (ADR 0013).
+JSON documents (ADR 0013). Under Docker Compose the file is `/data/sentinel-local.db` in the
+named volume `sentinel-data`, separate from the host files.
+
+## Docker Compose (local packaging)
+
+```
+browser ── 127.0.0.1:8080 ──► frontend (Nginx, uid 101)
+                                ├─ /assets, SPA routes ─► static build (index.html fallback)
+                                └─ /api/ ──────────────► backend:8000 (Uvicorn, uid 10001)
+                                                            └─ /data/sentinel-local.db (volume)
+```
+
+Same code and behaviour as a host run. Differences: the backend listens on 0.0.0.0 inside
+the Compose network only (not published); `SENTINEL_MODE=local` is fixed, and no AWS
+credentials are mounted. Optional LLM settings come from `.env.docker` at container start.
 
 ## Investigation flow (Day 3)
 
@@ -118,7 +132,7 @@ restarts the phases.
 | 3 | Investigation engine: evidence bundle, provider interface, mock + one real provider, validation | Built; automated checks pass; real-provider runs with GroqCloud `openai/gpt-oss-20b` on the real AWS incident (prompt v1, then v2 with the confidence check), recorded in `docs/examples/` |
 | 4 | Terraform: bootstrap + dev env, workload, CloudWatch agent, SSM scripts | 4a prepared: `infra/` structure, local state (ADR 0016), read-only policy and its test. 4b written and checked locally (ADR 0017): VPC, public subnet, t3.micro with the stdlib workload app (`workload/app.py`), CloudWatch agent (one metric), log group, CPU alarm, operator policy, read-only `scripts/cost-check.sh`, guardrail tests; applied by the owner (first 17, later 19 resources with the read-only role; `/health` 200; destroy to an empty state); **safety timer not yet validated**. Next: termination test, then 4c (SSM fault scripts) |
 | 5 | AWS mode: Boto3 collectors, Resources pages | 5a built (ADR 0018): `collectors/aws/` (EC2 discovery, `GetMetricData`, Logs Insights), per-collector status and partial syncs, Sentinel read-only role; **validated once on AWS by the owner** (19 resources, 3 collectors ok, 7/7 signals, no incident on a healthy workload, destroyed). 5b built (ADR 0019): dev-only `/fault/500` route and `scripts/demo_traffic.py`; **run once on AWS**: a real high-severity R-5XX incident (peak 21.1%), then destroyed (19 resources, leftover check clean); resolution on AWS not observed. Not built: Resources pages, deployment events, alarm states |
-| 6 | Docker Compose, CI hardening, all UI states | Not started |
+| 6 | Docker Compose, CI hardening, all UI states | Docker Compose built (2026-11-17): `backend` (FastAPI, non-root, read-only) and `frontend` (Nginx: static build + `/api/` proxy) on `127.0.0.1:8080`, SQLite in a named volume, simulated mode only; smoke and persistence test `scripts/docker_smoke.py`. CI hardening not started |
 | 7 | Demo, documentation, review, `v0.1.0` | Portfolio README and documentation done (2026-11-17); screenshots and the `v0.1.0` tag pending |
 
 Each milestone stops for review before the next one starts.

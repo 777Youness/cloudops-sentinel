@@ -4,7 +4,7 @@ Read this file before every task. It governs how you work in this repository.
 If a request conflicts with this file, stop and say so instead of silently choosing.
 
 Status: V1 (incident investigation) released as a portfolio version on 2026-11-17: Days 1–5b
-built, the real-AWS demo run once. Day 6 (Docker Compose, CI hardening) is not started
+built, the real-AWS demo run once. Day 6: Docker Compose built, CI hardening not started
 (see `docs/architecture.md`).
 
 ---
@@ -293,6 +293,10 @@ uv run pytest -q
 cd frontend && npm install
 npm run dev
 npm run gen:api        # export OpenAPI from the backend code and regenerate src/api/schema.d.ts
+
+# Docker (simulated mode, http://localhost:8080; data in the sentinel-data volume)
+docker compose up --build -d
+docker compose down            # keeps the data; --volumes deletes it
 
 # infra (Day 4+) — always from infra/envs/dev
 terraform init && terraform fmt -check && terraform validate

@@ -44,4 +44,4 @@ Codes: `NOT_FOUND`, `VALIDATION_ERROR`, `SYNC_IN_PROGRESS`, `INVESTIGATION_IN_PR
   (`timeout`, `unreachable`, `auth`, `rate_limited`, `provider_error`, `bad_response`) or a
   validator reason (`not_json`, `forbidden_field`, `remediation_not_human`,
   `schema_invalid`, `no_hypotheses`, `missing_citation`, `unknown_fact`, `duplicate_id`,
-  `text_too_long`, `command_in_text`).
+  `text_too_long`, `command_in_text`, `confidence_unsupported`).
